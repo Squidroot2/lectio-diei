@@ -1,11 +1,9 @@
-use std::error::Error;
-use std::fmt::{self, Display};
-
 use log::*;
 
-use crate::client::{WebClient, WebGetError};
+use crate::client::WebClient;
 use crate::date::DateId;
-use crate::db::{DatabaseError, DatabaseHandle};
+use crate::db::DatabaseHandle;
+use crate::error::{DatabaseError, RetrievalError};
 use crate::lectionary::Lectionary;
 
 /// Retrieves lectionary from db and web and attempts to store it before printing to STDOUT
@@ -56,45 +54,4 @@ async fn retrieve_and_store(date_id: DateId, db: &DatabaseHandle) -> Result<Lect
         }
     };
     Ok(lectionary)
-}
-
-#[derive(Debug)]
-pub struct RetrievalError {
-    db_error: Option<DatabaseError>,
-    web_error: Option<WebGetError>,
-}
-
-impl Display for RetrievalError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match (self.db_error.as_ref(), self.web_error.as_ref()) {
-            (Some(db_error), Some(web_error)) => write!(
-                f,
-                "Failed to retrieve from db ({}) and failed to retrieve from web ({})",
-                db_error, web_error
-            ),
-            (None, Some(web_error)) => write!(f, "Failed to retrieve from web ({})", web_error),
-            (Some(db_error), None) => write!(f, "Failed to retrieve from db ({})", db_error),
-            (None, None) => write!(f, "Failed to retrieve (undertermined cause)"),
-        }
-    }
-}
-
-impl Error for RetrievalError {}
-
-impl From<DatabaseError> for RetrievalError {
-    fn from(value: DatabaseError) -> Self {
-        RetrievalError {
-            db_error: Some(value),
-            web_error: None,
-        }
-    }
-}
-
-impl From<WebGetError> for RetrievalError {
-    fn from(value: WebGetError) -> Self {
-        RetrievalError {
-            db_error: None,
-            web_error: Some(value),
-        }
-    }
 }

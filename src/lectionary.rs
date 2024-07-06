@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 
 use log::*;
@@ -10,6 +9,7 @@ use scraper::Html;
 
 use crate::date::DateId;
 use crate::db::{LectionaryDbEntity, ReadingRow};
+use crate::error::{LectionaryHtmlError, ReadingHtmlError, ReadingNameFromStringError};
 use crate::html;
 
 /// Main container in which all other relevant elements are found
@@ -116,25 +116,6 @@ impl From<LectionaryDbEntity> for Lectionary {
     }
 }
 
-#[derive(Debug)]
-pub enum LectionaryHtmlError {
-    NoContainerFound,
-    NoDayNameElementFound,
-    MissingReading(ReadingName),
-}
-
-impl Display for LectionaryHtmlError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::NoContainerFound => write!(f, "No main readings container found"),
-            Self::NoDayNameElementFound => write!(f, "No day name element found"),
-            Self::MissingReading(name) => write!(f, "Missing required reading: {}", name),
-        }
-    }
-}
-
-impl Error for LectionaryHtmlError {}
-
 /// Use within a element found by READINGS_SELECTOR
 static READING_NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse(".name").unwrap());
 
@@ -218,20 +199,8 @@ impl TryFrom<String> for ReadingName {
             Self::PSALM => Ok(Self::Psalm),
             Self::GOSPEL => Ok(Self::Gospel),
             Self::ALLELUIA => Ok(Self::Alleluia),
-            _ => Err(Self::Error { value }),
+            _ => Err(Self::Error::from(value)),
         }
-    }
-}
-
-/// Error for TryFrom\<String> on ReadingName
-#[derive(Debug)]
-pub struct ReadingNameFromStringError {
-    value: String,
-}
-impl std::error::Error for ReadingNameFromStringError {}
-impl fmt::Display for ReadingNameFromStringError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Invalid reading name: {}", self.value)
     }
 }
 
@@ -255,16 +224,16 @@ impl Reading {
         &self.text
     }
 
-    fn from_container(reading_container: ElementRef<'_>) -> Result<Self, Box<dyn Error>> {
+    fn from_container(reading_container: ElementRef<'_>) -> Result<Self, ReadingHtmlError> {
         let location_elmt = reading_container
             .select(&READING_LOCATION_SELECTOR)
             .next()
-            .ok_or("Missing Location")?;
+            .ok_or(ReadingHtmlError::MissingLocation)?;
         let location = html::replace_entities(location_elmt.inner_html());
         let content = reading_container
             .select(&READING_CONTENT_SELECTOR)
             .next()
-            .ok_or("Missing Content")?;
+            .ok_or(ReadingHtmlError::MissingContent)?;
         let text = html::element_to_plain_text(&content);
 
         Ok(Reading { location, text })

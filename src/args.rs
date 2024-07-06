@@ -1,6 +1,3 @@
-use std::{error::Error, fmt::Display};
-
-use chrono::format::ParseError;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -61,25 +58,4 @@ enum ReadingArg {
     Psalm,
     Reading2,
     Gospel,
-}
-
-#[derive(Debug)]
-pub enum ArgumentError {
-    InvalidDate(ParseError),
-}
-
-impl Display for ArgumentError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidDate(e) => write!(f, "Invalid date Argument: {}", e),
-        }
-    }
-}
-
-impl Error for ArgumentError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::InvalidDate(e) => Some(e),
-        }
-    }
 }

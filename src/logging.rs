@@ -9,8 +9,9 @@ use simplelog::{
     WriteLogger,
 };
 
-use crate::path::{self, PathError};
+use crate::{error::PathError, path};
 
+/// Initializes a combined logger included a terminal logger and a file logger. If file logger fails to be created, still initializes the terminal logger
 pub fn init_logger() {
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
     loggers.push(terminal_logger());
@@ -26,12 +27,14 @@ pub fn init_logger() {
     }
 }
 
-pub fn init_combined(loggers: Vec<Box<dyn SharedLogger>>) {
-    if let Err(_) = CombinedLogger::init(loggers) {
+/// Tries to initialize the given loggers into a combined logger
+fn init_combined(loggers: Vec<Box<dyn SharedLogger>>) {
+    if CombinedLogger::init(loggers).is_err() {
         error!("Tried to initialize logger after already initialized")
     }
 }
 
+/// Creates an uninitialized terminal logger
 fn terminal_logger() -> Box<TermLogger> {
     TermLogger::new(
         LevelFilter::Warn,
@@ -46,6 +49,7 @@ fn terminal_logger() -> Box<TermLogger> {
     )
 }
 
+/// Creates an uninitialized file logger
 fn file_logger() -> Result<Box<WriteLogger<File>>, FileLoggerError> {
     let path = path::create_and_get_log_path()?;
     let file = File::options().create(true).append(true).open(path)?;
@@ -64,8 +68,9 @@ fn file_logger() -> Result<Box<WriteLogger<File>>, FileLoggerError> {
     ))
 }
 
+/// Represents a failure to open a file for the purpose of writing logs to it
 #[derive(Debug)]
-pub enum FileLoggerError {
+enum FileLoggerError {
     PathError(PathError),
     FileOpenError(io::Error),
 }

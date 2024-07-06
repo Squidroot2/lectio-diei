@@ -1,8 +1,6 @@
-﻿use std::error::Error;
-use std::fmt::{self, Display};
+﻿use std::fmt::{self, Display};
 
 use log::*;
-use sqlx::migrate::MigrateError;
 use sqlx::{
     migrate::MigrateDatabase,
     sqlite::{Sqlite, SqlitePool},
@@ -10,8 +8,9 @@ use sqlx::{
 };
 
 use crate::date::DateId;
+use crate::error::{DatabaseGetError, DatabaseInitError};
 use crate::lectionary::{Lectionary, Reading};
-use crate::path::{self, PathError};
+use crate::path::{self};
 
 pub struct DatabaseHandle {
     connection: SqlitePool,
@@ -133,105 +132,6 @@ impl DatabaseHandle {
         db_url.push_str(file_path.to_str().expect("file path must be valid string"));
 
         Ok(db_url)
-    }
-}
-
-#[derive(Debug)]
-pub enum DatabaseError {
-    InitError(DatabaseInitError),
-    GetError(DatabaseGetError),
-}
-
-impl Display for DatabaseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InitError(e) => write!(f, "{}", e),
-            Self::GetError(e) => write!(f, "{}", e),
-        }
-    }
-}
-
-impl Error for DatabaseError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::InitError(e) => Some(e),
-            Self::GetError(e) => Some(e),
-        }
-    }
-}
-
-impl From<DatabaseInitError> for DatabaseError {
-    fn from(value: DatabaseInitError) -> Self {
-        Self::InitError(value)
-    }
-}
-
-impl From<DatabaseGetError> for DatabaseError {
-    fn from(value: DatabaseGetError) -> Self {
-        Self::GetError(value)
-    }
-}
-
-#[derive(Debug)]
-pub enum DatabaseGetError {
-    NotPresent,
-    QueryError(sqlx::Error),
-}
-
-impl Display for DatabaseGetError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::NotPresent => write!(f, "Query returned no results"),
-            Self::QueryError(e) => write!(f, "Select Query failed: {}", e),
-        }
-    }
-}
-
-impl Error for DatabaseGetError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::NotPresent => None,
-            Self::QueryError(e) => Some(e),
-        }
-    }
-}
-
-impl From<sqlx::Error> for DatabaseGetError {
-    fn from(value: sqlx::Error) -> Self {
-        Self::QueryError(value)
-    }
-}
-
-#[derive(Debug)]
-pub enum DatabaseInitError {
-    CannotGetUrl(PathError),
-    CreateDatabaseError(sqlx::Error),
-    PoolCreationFailed(sqlx::Error),
-    PragmaForeignKeysFailure(sqlx::Error),
-    MigrationError(MigrateError),
-}
-
-impl Display for DatabaseInitError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::CannotGetUrl(e) => write!(f, "Cannot construct database URL: {}", e),
-            Self::CreateDatabaseError(e) => write!(f, "Cannot create database: {}", e),
-            Self::PoolCreationFailed(e) => write!(f, "Failed to create a connection pool for the database: {}", e),
-            Self::PragmaForeignKeysFailure(e) => write!(f, "Failed to enable foreign keys in the database: {}", e),
-            Self::MigrationError(e) => write!(f, "Failed to run migration scripts for database: {}", e),
-        }
-    }
-}
-
-impl Error for DatabaseInitError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::CannotGetUrl(e) => Some(e),
-            Self::CreateDatabaseError(e) => Some(e),
-            Self::PoolCreationFailed(e) => Some(e),
-            Self::PragmaForeignKeysFailure(e) => Some(e),
-            Self::MigrationError(e) => Some(e),
-        }
     }
 }
 

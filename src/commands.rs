@@ -1,13 +1,10 @@
-use std::fmt;
-use std::{error::Error, fmt::Display};
-
 use log::*;
 
-use crate::orchestration::RetrievalError;
+use crate::error::{ApplicationError, ArgumentError, DatabaseInitError};
 use crate::{
-    args::{ArgumentError, DatabaseCommand, DisplayReadingsArgs},
+    args::{DatabaseCommand, DisplayReadingsArgs},
     date::DateId,
-    db::{DatabaseHandle, DatabaseInitError},
+    db::DatabaseHandle,
     orchestration,
 };
 
@@ -63,63 +60,4 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
     println!("{}", removed_count);
 
     Ok(())
-}
-
-#[derive(Debug)]
-pub enum ApplicationError {
-    NotImplemented,
-    BadArgument(ArgumentError),
-    InitDbError(DatabaseInitError),
-    RetrievalError(RetrievalError),
-}
-
-impl ApplicationError {
-    pub fn exit_code(&self) -> u8 {
-        match self {
-            Self::BadArgument(_) => 3,
-            Self::InitDbError(_) => 4,
-            Self::RetrievalError(_) => 5,
-            Self::NotImplemented => 100,
-        }
-    }
-}
-
-impl Display for ApplicationError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::BadArgument(e) => write!(f, "Bad arugment: {}", e),
-            Self::InitDbError(e) => write!(f, "Failed to initialize connection to database: {}", e),
-            Self::RetrievalError(e) => write!(f, "Can't display lectionary: {}", e),
-            Self::NotImplemented => write!(f, "Not Implemented"),
-        }
-    }
-}
-
-impl Error for ApplicationError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::BadArgument(e) => Some(e),
-            Self::InitDbError(e) => Some(e),
-            Self::RetrievalError(e) => Some(e),
-            Self::NotImplemented => None,
-        }
-    }
-}
-
-impl From<DatabaseInitError> for ApplicationError {
-    fn from(value: DatabaseInitError) -> Self {
-        Self::InitDbError(value)
-    }
-}
-
-impl From<ArgumentError> for ApplicationError {
-    fn from(value: ArgumentError) -> Self {
-        Self::BadArgument(value)
-    }
-}
-
-impl From<RetrievalError> for ApplicationError {
-    fn from(value: RetrievalError) -> Self {
-        Self::RetrievalError(value)
-    }
 }
