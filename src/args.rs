@@ -29,11 +29,14 @@ pub enum Command {
 
 #[derive(Subcommand)]
 pub enum DatabaseCommand {
+    /// Removes specified date(s) from database if present. Writes number removed to STDOUT
     Remove {
-        /// Dates to remove
+        /// Dates to remove. Should be in MMddYY format
         #[arg(trailing_var_arg(true), num_args(1..usize::MAX))]
         dates: Vec<String>,
     },
+    /// Gets a count of the rows in the db. Writes num to STDOUT
+    Count,
 }
 
 #[derive(Args)]

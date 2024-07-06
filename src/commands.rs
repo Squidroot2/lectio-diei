@@ -1,6 +1,6 @@
 use log::*;
 
-use crate::error::{ApplicationError, ArgumentError, DatabaseInitError};
+use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError};
 use crate::{
     args::{DatabaseCommand, DisplayReadingsArgs},
     date::DateId,
@@ -27,7 +27,16 @@ pub async fn display(maybe_date_string: Option<String>, readings: DisplayReading
 pub async fn handle_db_command(command: DatabaseCommand) -> Result<(), ApplicationError> {
     match command {
         DatabaseCommand::Remove { dates } => remove_entries(dates).await.map_err(ApplicationError::from),
+        DatabaseCommand::Count => count_entries().await.map_err(ApplicationError::from),
     }
+}
+
+/// Subcommand for db. Counts number of lectionaries and prints that to STDOUT
+async fn count_entries() -> Result<(), DatabaseError> {
+    let db = DatabaseHandle::new().await?;
+    let count = db.get_lectionary_count().await.map_err(DatabaseGetError::from)?;
+
+    Ok(println!("{}", count))
 }
 
 /// Subcommand for db. Removes a list of entries. Sends removed count to STDOUT
@@ -57,7 +66,5 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
         };
     }
 
-    println!("{}", removed_count);
-
-    Ok(())
+    Ok(println!("{}", removed_count))
 }

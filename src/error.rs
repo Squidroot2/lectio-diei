@@ -15,7 +15,7 @@ use crate::lectionary::ReadingName;
 pub enum ApplicationError {
     NotImplemented,
     BadArgument(ArgumentError),
-    InitDbError(DatabaseInitError),
+    DatabaseError(DatabaseError),
     RetrievalError(RetrievalError),
 }
 
@@ -23,7 +23,7 @@ impl ApplicationError {
     pub fn exit_code(&self) -> u8 {
         match self {
             Self::BadArgument(_) => 3,
-            Self::InitDbError(_) => 4,
+            Self::DatabaseError(_) => 4,
             Self::RetrievalError(_) => 5,
             Self::NotImplemented => 100,
         }
@@ -34,9 +34,9 @@ impl Display for ApplicationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BadArgument(e) => write!(f, "Bad arugment: {}", e),
-            Self::InitDbError(e) => write!(f, "Failed to initialize connection to database: {}", e),
+            Self::DatabaseError(e) => write!(f, "Fatal database error: {}", e),
             Self::RetrievalError(e) => write!(f, "Can't display lectionary: {}", e),
-            Self::NotImplemented => write!(f, "Not Implemented"),
+            Self::NotImplemented => write!(f, "Functionality Not Implemented"),
         }
     }
 }
@@ -45,10 +45,34 @@ impl Error for ApplicationError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::BadArgument(e) => Some(e),
-            Self::InitDbError(e) => Some(e),
+            Self::DatabaseError(e) => Some(e),
             Self::RetrievalError(e) => Some(e),
             Self::NotImplemented => None,
         }
+    }
+}
+
+impl From<DatabaseInitError> for ApplicationError {
+    fn from(value: DatabaseInitError) -> Self {
+        Self::from(DatabaseError::InitError(value))
+    }
+}
+
+impl From<DatabaseError> for ApplicationError {
+    fn from(value: DatabaseError) -> Self {
+        Self::DatabaseError(value)
+    }
+}
+
+impl From<ArgumentError> for ApplicationError {
+    fn from(value: ArgumentError) -> Self {
+        Self::BadArgument(value)
+    }
+}
+
+impl From<RetrievalError> for ApplicationError {
+    fn from(value: RetrievalError) -> Self {
+        Self::RetrievalError(value)
     }
 }
 
@@ -112,24 +136,6 @@ impl From<WebGetError> for RetrievalError {
             db_error: None,
             web_error: Some(value),
         }
-    }
-}
-
-impl From<DatabaseInitError> for ApplicationError {
-    fn from(value: DatabaseInitError) -> Self {
-        Self::InitDbError(value)
-    }
-}
-
-impl From<ArgumentError> for ApplicationError {
-    fn from(value: ArgumentError) -> Self {
-        Self::BadArgument(value)
-    }
-}
-
-impl From<RetrievalError> for ApplicationError {
-    fn from(value: RetrievalError) -> Self {
-        Self::RetrievalError(value)
     }
 }
 

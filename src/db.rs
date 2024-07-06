@@ -4,7 +4,7 @@ use log::*;
 use sqlx::{
     migrate::MigrateDatabase,
     sqlite::{Sqlite, SqlitePool},
-    Executor, FromRow, Transaction,
+    Executor, FromRow, Row, Transaction,
 };
 
 use crate::date::DateId;
@@ -81,6 +81,13 @@ impl DatabaseHandle {
                 Ok(true)
             }
         }
+    }
+
+    pub async fn get_lectionary_count(&self) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query("SELECT COUNT(*) FROM lectionary").fetch_one(&self.connection).await?;
+
+        // This is a safe cast because we know the row count will never be negative
+        result.try_get::<'_, i32, _>(0).map(|signed| signed as u64)
     }
 
     async fn get_reading_row(&self, lect_id: &DateId, reading_type: DbReadingType) -> Result<ReadingRow, sqlx::Error> {
