@@ -1,7 +1,8 @@
 ﻿use std::error::Error;
 use std::fmt::{self, Display};
 
-use log::info;
+use log::*;
+use sqlx::migrate::MigrateError;
 use sqlx::{
     migrate::MigrateDatabase,
     sqlite::{Sqlite, SqlitePool},
@@ -10,30 +11,18 @@ use sqlx::{
 
 use crate::date::DateId;
 use crate::lectionary::{Lectionary, Reading};
-use crate::path;
+use crate::path::{self, PathError};
 
-pub struct Database {
+pub struct DatabaseHandle {
     connection: SqlitePool,
 }
 
-impl Database {
-    pub async fn new() -> Result<Self, Box<dyn Error>> {
+impl DatabaseHandle {
+    pub async fn new() -> Result<Self, DatabaseInitError> {
         let db_url = Self::get_db_url()?;
         let pool = Self::init_db(&db_url).await?;
 
         Ok(Self { connection: pool })
-    }
-
-    pub async fn init_db(db_url: &str) -> Result<SqlitePool, Box<dyn Error>> {
-        if !Sqlite::database_exists(db_url).await.unwrap_or(false) {
-            info!("Creating new database at {}", &db_url);
-            Sqlite::create_database(db_url).await?;
-        }
-        let pool = SqlitePool::connect(db_url).await?;
-        pool.execute("PRAGMA foreign_keys = ON;").await?;
-        sqlx::migrate!("./migrations").run(&pool).await?;
-
-        Ok(pool)
     }
 
     pub async fn insert_lectionary(&self, lectionary: &Lectionary) -> Result<(), sqlx::Error> {
@@ -56,12 +45,12 @@ impl Database {
         transaction.commit().await
     }
 
-    pub async fn get_lectionary(&self, id: &DateId) -> Result<Lectionary, Box<dyn Error>> {
+    pub async fn get_lectionary(&self, id: &DateId) -> Result<Lectionary, DatabaseGetError> {
         let lect_row = sqlx::query_as::<_, LectionaryRow>("SELECT id, name FROM lectionary WHERE id = $1 LIMIT 1")
             .bind(id.as_str())
             .fetch_optional(&self.connection)
             .await?
-            .ok_or("Not Present")?;
+            .ok_or(DatabaseGetError::NotPresent)?;
 
         let first_reading_row = self.get_reading_row(id, DbReadingType::FirstReading).await?;
         let psalm_row = self.get_reading_row(id, DbReadingType::Psalm).await?;
@@ -77,6 +66,22 @@ impl Database {
         };
 
         Ok(Lectionary::from(entity))
+    }
+
+    pub async fn remove_lectionary(&self, id: &DateId) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM lectionary WHERE id=$1")
+            .bind(id.as_str())
+            .execute(&self.connection)
+            .await?;
+
+        match result.rows_affected() {
+            0 => Ok(false),
+            1 => Ok(true),
+            rows => {
+                warn!("Query should have removed 1 row but removed {}", rows);
+                Ok(true)
+            }
+        }
     }
 
     async fn get_reading_row(&self, lect_id: &DateId, reading_type: DbReadingType) -> Result<ReadingRow, sqlx::Error> {
@@ -102,13 +107,131 @@ impl Database {
         Ok(())
     }
 
-    fn get_db_url() -> Result<String, Box<dyn Error>> {
+    async fn init_db(db_url: &str) -> Result<SqlitePool, DatabaseInitError> {
+        if !Sqlite::database_exists(db_url).await.unwrap_or(false) {
+            info!("Creating new database at {}", &db_url);
+            Sqlite::create_database(db_url)
+                .await
+                .map_err(DatabaseInitError::CreateDatabaseError)?;
+        }
+        let pool = SqlitePool::connect(db_url).await.map_err(DatabaseInitError::PoolCreationFailed)?;
+        pool.execute("PRAGMA foreign_keys = ON;")
+            .await
+            .map_err(DatabaseInitError::PragmaForeignKeysFailure)?;
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .map_err(DatabaseInitError::MigrationError)?;
+
+        Ok(pool)
+    }
+
+    fn get_db_url() -> Result<String, DatabaseInitError> {
         let mut db_url = String::from("sqlite://");
-        let file_path = path::create_and_get_db_path()?;
+        let file_path = path::create_and_get_db_path().map_err(DatabaseInitError::CannotGetUrl)?;
 
         db_url.push_str(file_path.to_str().expect("file path must be valid string"));
 
         Ok(db_url)
+    }
+}
+
+#[derive(Debug)]
+pub enum DatabaseError {
+    InitError(DatabaseInitError),
+    GetError(DatabaseGetError),
+}
+
+impl Display for DatabaseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InitError(e) => write!(f, "{}", e),
+            Self::GetError(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl Error for DatabaseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::InitError(e) => Some(e),
+            Self::GetError(e) => Some(e),
+        }
+    }
+}
+
+impl From<DatabaseInitError> for DatabaseError {
+    fn from(value: DatabaseInitError) -> Self {
+        Self::InitError(value)
+    }
+}
+
+impl From<DatabaseGetError> for DatabaseError {
+    fn from(value: DatabaseGetError) -> Self {
+        Self::GetError(value)
+    }
+}
+
+#[derive(Debug)]
+pub enum DatabaseGetError {
+    NotPresent,
+    QueryError(sqlx::Error),
+}
+
+impl Display for DatabaseGetError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NotPresent => write!(f, "Query returned no results"),
+            Self::QueryError(e) => write!(f, "Select Query failed: {}", e),
+        }
+    }
+}
+
+impl Error for DatabaseGetError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::NotPresent => None,
+            Self::QueryError(e) => Some(e),
+        }
+    }
+}
+
+impl From<sqlx::Error> for DatabaseGetError {
+    fn from(value: sqlx::Error) -> Self {
+        Self::QueryError(value)
+    }
+}
+
+#[derive(Debug)]
+pub enum DatabaseInitError {
+    CannotGetUrl(PathError),
+    CreateDatabaseError(sqlx::Error),
+    PoolCreationFailed(sqlx::Error),
+    PragmaForeignKeysFailure(sqlx::Error),
+    MigrationError(MigrateError),
+}
+
+impl Display for DatabaseInitError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::CannotGetUrl(e) => write!(f, "Cannot construct database URL: {}", e),
+            Self::CreateDatabaseError(e) => write!(f, "Cannot create database: {}", e),
+            Self::PoolCreationFailed(e) => write!(f, "Failed to create a connection pool for the database: {}", e),
+            Self::PragmaForeignKeysFailure(e) => write!(f, "Failed to enable foreign keys in the database: {}", e),
+            Self::MigrationError(e) => write!(f, "Failed to run migration scripts for database: {}", e),
+        }
+    }
+}
+
+impl Error for DatabaseInitError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::CannotGetUrl(e) => Some(e),
+            Self::CreateDatabaseError(e) => Some(e),
+            Self::PoolCreationFailed(e) => Some(e),
+            Self::PragmaForeignKeysFailure(e) => Some(e),
+            Self::MigrationError(e) => Some(e),
+        }
     }
 }
 

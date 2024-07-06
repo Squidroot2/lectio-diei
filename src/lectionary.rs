@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 
-use log::error;
+use log::*;
 use once_cell::sync::Lazy;
 use scraper::element_ref::ElementRef;
 use scraper::selectable::Selectable;
@@ -30,16 +30,24 @@ pub struct Lectionary {
 }
 
 impl Lectionary {
-    pub fn create_from_html(id: DateId, document: Html) -> Result<Self, Box<dyn Error>> {
-        let container = document.select(&CONTAINER_SELECTOR).next().ok_or("No container found")?;
-        let day_name_elmnt = container.select(&DAY_NAME_SELECTOR).next().ok_or("No day name element found")?;
+    pub fn create_from_html(id: DateId, document: Html) -> Result<Self, LectionaryHtmlError> {
+        let container = document
+            .select(&CONTAINER_SELECTOR)
+            .next()
+            .ok_or(LectionaryHtmlError::NoContainerFound)?;
+        let day_name_elmnt = container
+            .select(&DAY_NAME_SELECTOR)
+            .next()
+            .ok_or(LectionaryHtmlError::NoDayNameElementFound)?;
         let day_name = day_name_elmnt.inner_html().trim().to_owned();
 
         let readings = ParsedReadings::extract_from_container(container);
-        let reading_1 = readings.reading_1.ok_or("Missing Reading 1")?;
+        let reading_1 = readings
+            .reading_1
+            .ok_or(LectionaryHtmlError::MissingReading(ReadingName::Reading1))?;
         let reading_2 = readings.reading_2;
-        let resp_psalm = readings.resp_psalm.ok_or("Missing Psalm")?;
-        let gospel = readings.gospel.ok_or("Missing Gospel")?;
+        let resp_psalm = readings.resp_psalm.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Psalm))?;
+        let gospel = readings.gospel.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Gospel))?;
 
         Ok(Lectionary {
             id,
@@ -108,6 +116,25 @@ impl From<LectionaryDbEntity> for Lectionary {
     }
 }
 
+#[derive(Debug)]
+pub enum LectionaryHtmlError {
+    NoContainerFound,
+    NoDayNameElementFound,
+    MissingReading(ReadingName),
+}
+
+impl Display for LectionaryHtmlError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NoContainerFound => write!(f, "No main readings container found"),
+            Self::NoDayNameElementFound => write!(f, "No day name element found"),
+            Self::MissingReading(name) => write!(f, "Missing required reading: {}", name),
+        }
+    }
+}
+
+impl Error for LectionaryHtmlError {}
+
 /// Use within a element found by READINGS_SELECTOR
 static READING_NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse(".name").unwrap());
 
@@ -127,7 +154,7 @@ impl ParsedReadings {
         let readings = container.select(&READINGS_SELECTOR);
         for reading_elmt in readings {
             if let Some(name_elmnt) = reading_elmt.select(&READING_NAME_SELECTOR).next() {
-                match ReadingName::try_from(name_elmnt.inner_html()) {
+                match ReadingName::try_from(html::replace_entities(name_elmnt.inner_html())) {
                     Ok(name) => match Reading::from_container(reading_elmt) {
                         Ok(reading) => match name {
                             ReadingName::Reading1 => out.reading_1 = Some(reading),
@@ -150,7 +177,7 @@ impl ParsedReadings {
 }
 
 #[derive(Debug)]
-enum ReadingName {
+pub enum ReadingName {
     Reading1,
     Reading2,
     Psalm,
@@ -183,7 +210,9 @@ impl TryFrom<String> for ReadingName {
     type Error = ReadingNameFromStringError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.trim() {
+        let trimmed = value.trim();
+        trace!("trimmed reading value: {}", trimmed);
+        match trimmed {
             Self::READING1 => Ok(Self::Reading1),
             Self::READING2 => Ok(Self::Reading2),
             Self::PSALM => Ok(Self::Psalm),
@@ -196,7 +225,7 @@ impl TryFrom<String> for ReadingName {
 
 /// Error for TryFrom\<String> on ReadingName
 #[derive(Debug)]
-struct ReadingNameFromStringError {
+pub struct ReadingNameFromStringError {
     value: String,
 }
 impl std::error::Error for ReadingNameFromStringError {}
@@ -227,11 +256,11 @@ impl Reading {
     }
 
     fn from_container(reading_container: ElementRef<'_>) -> Result<Self, Box<dyn Error>> {
-        let location = reading_container
+        let location_elmt = reading_container
             .select(&READING_LOCATION_SELECTOR)
             .next()
-            .ok_or("Missing Location")?
-            .inner_html();
+            .ok_or("Missing Location")?;
+        let location = html::replace_entities(location_elmt.inner_html());
         let content = reading_container
             .select(&READING_CONTENT_SELECTOR)
             .next()

@@ -1,15 +1,11 @@
 use std::fmt::{self, Display};
 
-use chrono::{DateTime, Local};
+use chrono::format::ParseError;
+use chrono::{DateTime, Local, NaiveDate};
 use sqlx::{
     sqlite::{Sqlite, SqliteValueRef},
     Decode, Type,
 };
-
-/// Gets the date in MMddYY format
-pub fn get_date_string(date: &DateTime<Local>) -> String {
-    date.format("%m%d%y").to_string()
-}
 
 /// Type checked String used for url retrieval and database ids
 #[derive(Debug)]
@@ -25,6 +21,11 @@ impl DateId {
     pub fn today() -> Self {
         Self::from(&Local::now())
     }
+
+    pub fn checked_from_str(date_string: &str) -> Result<Self, ParseError> {
+        let date = NaiveDate::parse_from_str(date_string, "%m%d%y")?;
+        Ok(Self::from(&date))
+    }
 }
 
 impl Display for DateId {
@@ -35,6 +36,13 @@ impl Display for DateId {
 
 impl From<&DateTime<Local>> for DateId {
     fn from(date: &DateTime<Local>) -> Self {
+        let value = date.format("%m%d%y").to_string();
+        Self { value }
+    }
+}
+
+impl From<&NaiveDate> for DateId {
+    fn from(date: &NaiveDate) -> Self {
         let value = date.format("%m%d%y").to_string();
         Self { value }
     }

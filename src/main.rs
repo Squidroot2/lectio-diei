@@ -1,14 +1,29 @@
-use std::error::Error;
+use std::process::ExitCode;
 
-use lectio_diei::date::DateId;
+use clap::Parser;
+use log::*;
+
+use lectio_diei::args::{Arguments, Command};
+use lectio_diei::commands::{self, ApplicationError};
 use lectio_diei::logging;
-use lectio_diei::orchestration;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    logging::init_logger()?;
+async fn main() -> ExitCode {
+    if let Err(e) = run().await {
+        error!("{}", e);
+        return ExitCode::from(e.exit_code());
+    }
 
-    orchestration::retrieve_and_display(DateId::today()).await?;
+    ExitCode::SUCCESS
+}
 
-    Ok(())
+async fn run() -> Result<(), ApplicationError> {
+    logging::init_logger();
+    let args = Arguments::parse();
+
+    match args.command {
+        Command::Display { date, readings } => commands::display(date, readings).await,
+        Command::Db { command } => commands::handle_db_command(command).await,
+        Command::Config {} => Err(ApplicationError::NotImplemented),
+    }
 }

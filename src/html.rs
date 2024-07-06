@@ -1,6 +1,10 @@
+use std::collections::HashMap;
+
+use once_cell::sync::Lazy;
 use scraper::ElementRef;
 use scraper::Node;
 
+/// Converts an element to plain text, removing tags like '\<strong\>' while keeping the text within those elements
 pub fn element_to_plain_text(element: &ElementRef) -> String {
     let mut plain_text = String::new();
     for node in element.children() {
@@ -20,6 +24,29 @@ pub fn element_to_plain_text(element: &ElementRef) -> String {
     }
     // For some reason, the nodes start with large blocks of whitespace.
     plain_text.trim().to_string()
+}
+
+/// HashMap of expected html entities with their replacement character
+static HTML_ENTITIES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
+    let mut map = HashMap::new();
+    map.insert("&nbsp;", " ");
+    map.insert("&amp;", "&");
+    map.insert("&lt;", "<");
+    map.insert("&gt;", ">");
+    map.insert("&quot;", "\"");
+    map.insert("&#39;", "'");
+    map.insert("&apos;", "'");
+    map
+});
+
+/// Use when getting the inner text of an html element
+pub fn replace_entities(mut value: String) -> String {
+    for (entity, target) in HTML_ENTITIES.iter() {
+        if value.contains(entity) {
+            value = value.replace(entity, target)
+        }
+    }
+    value
 }
 
 #[cfg(test)]
