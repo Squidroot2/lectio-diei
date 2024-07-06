@@ -1,0 +1,25 @@
+[package]
+name = "lectio-diei"
+version = "0.1.0"
+edition = "2021"
+description = "CLI application for displaying the daily Catholic readings"
+repository = "https://github.com/Squidroot2/lectio-diei"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+
+[dependencies]
+chrono = "0.4.*"
+log = "0.4.*"
+once_cell = "1.19.*"
+reqwest = "0.12.*"
+scraper = "0.19.*"
+simplelog = "0.12.*"
+sqlx = { version = "0.7.*", features = ["sqlite", "runtime-tokio"] }
+time = { version = "0.3.*", features = ["local-offset"] }
+tokio =  { version = "1.38", features = ["full"] }
