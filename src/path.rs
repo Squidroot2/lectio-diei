@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::error::PathError;
 
-/// Gets the path to the db file (Linux Only). Creates directory if it does not exist
+/// Returns the path of the db file, after ensuring all parent directories have been created
 pub fn create_and_get_db_path() -> Result<PathBuf, PathError> {
     let mut path = get_home_path().map_err(PathError::NoHome)?;
     path.push(".local");
@@ -18,12 +18,25 @@ pub fn create_and_get_db_path() -> Result<PathBuf, PathError> {
     Ok(path)
 }
 
+/// Returns the path of the log file, after ensuring all parent directories have been created
 pub fn create_and_get_log_path() -> Result<PathBuf, PathError> {
     let mut path = get_home_path().map_err(PathError::NoHome)?;
     path.push(".local");
     path.push("state");
     path.push(env!("CARGO_CRATE_NAME"));
     path.push("debug.log");
+
+    fs::create_dir_all(path.parent().expect("Created path must have parent")).map_err(PathError::PathCreateFailure)?;
+
+    Ok(path)
+}
+
+/// Returns the path of the config file, after ensuring all parent directories have been created
+pub fn create_and_get_config_path() -> Result<PathBuf, PathError> {
+    let mut path = get_home_path().map_err(PathError::NoHome)?;
+    path.push(".config");
+    path.push(env!("CARGO_CRATE_NAME"));
+    path.push("config.toml");
 
     fs::create_dir_all(path.parent().expect("Created path must have parent")).map_err(PathError::PathCreateFailure)?;
 

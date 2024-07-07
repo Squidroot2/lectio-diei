@@ -8,6 +8,7 @@ use std::{
 use chrono::ParseError;
 use reqwest::StatusCode;
 use sqlx::migrate::MigrateError;
+use toml::de;
 
 use crate::lectionary::ReadingName;
 
@@ -323,6 +324,48 @@ impl From<String> for ReadingNameFromStringError {
     }
 }
 
+/// Represents a failure to read the config file
+#[derive(Debug)]
+pub enum ReadConfigError {
+    CannotGetPath(PathError),
+    CannotOpenFile(io::Error),
+    DeserializationError(de::Error),
+}
+
+impl fmt::Display for ReadConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::CannotGetPath(e) => write!(f, "Cannot get path to config file: {}", e),
+            Self::CannotOpenFile(e) => write!(f, "Cannot read config file: {}", e),
+            Self::DeserializationError(e) => write!(f, "Failed to deserialize config file: {}", e),
+        }
+    }
+}
+impl Error for ReadConfigError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::CannotGetPath(e) => Some(e),
+            Self::CannotOpenFile(e) => Some(e),
+            Self::DeserializationError(e) => Some(e),
+        }
+    }
+}
+impl From<PathError> for ReadConfigError {
+    fn from(value: PathError) -> Self {
+        Self::CannotGetPath(value)
+    }
+}
+impl From<io::Error> for ReadConfigError {
+    fn from(value: io::Error) -> Self {
+        Self::CannotOpenFile(value)
+    }
+}
+impl From<de::Error> for ReadConfigError {
+    fn from(value: de::Error) -> Self {
+        Self::DeserializationError(value)
+    }
+}
+/// Represents a failure to identify a file path
 #[derive(Debug)]
 pub enum PathError {
     NoHome(VarError),

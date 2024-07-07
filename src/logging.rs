@@ -9,12 +9,16 @@ use simplelog::{
     WriteLogger,
 };
 
-use crate::{error::PathError, path};
+use crate::{
+    colorful_logger::{ColorConfig, ColorfulLogger},
+    error::PathError,
+    path,
+};
 
 /// Initializes a combined logger included a terminal logger and a file logger. If file logger fails to be created, still initializes the terminal logger
 pub fn init_logger() {
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
-    loggers.push(terminal_logger());
+    loggers.push(color_logger());
     match file_logger() {
         Ok(file_logger) => {
             loggers.push(file_logger);
@@ -35,7 +39,7 @@ fn init_combined(loggers: Vec<Box<dyn SharedLogger>>) {
 }
 
 /// Creates an uninitialized terminal logger
-fn terminal_logger() -> Box<TermLogger> {
+fn _terminal_logger() -> Box<TermLogger> {
     TermLogger::new(
         LevelFilter::Warn,
         ConfigBuilder::new()
@@ -47,6 +51,10 @@ fn terminal_logger() -> Box<TermLogger> {
         TerminalMode::Stderr,
         ColorChoice::Auto,
     )
+}
+
+fn color_logger() -> Box<ColorfulLogger> {
+    ColorfulLogger::new(LevelFilter::Warn, ColorConfig::default())
 }
 
 /// Creates an uninitialized file logger
