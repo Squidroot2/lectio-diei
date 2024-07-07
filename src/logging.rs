@@ -16,9 +16,9 @@ use crate::{
 };
 
 /// Initializes a combined logger included a terminal logger and a file logger. If file logger fails to be created, still initializes the terminal logger
-pub fn init_logger() {
+pub fn init_logger(options: LoggingOptions) {
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
-    loggers.push(color_logger());
+    loggers.push(color_logger(&options));
     match file_logger() {
         Ok(file_logger) => {
             loggers.push(file_logger);
@@ -53,8 +53,12 @@ fn _terminal_logger() -> Box<TermLogger> {
     )
 }
 
-fn color_logger() -> Box<ColorfulLogger> {
-    ColorfulLogger::new(LevelFilter::Warn, ColorConfig::default())
+fn color_logger(options: &LoggingOptions) -> Box<ColorfulLogger> {
+    let color_config = match options.no_color {
+        true => ColorConfig::no_color(),
+        false => ColorConfig::default(),
+    };
+    ColorfulLogger::new(LevelFilter::Warn, color_config)
 }
 
 /// Creates an uninitialized file logger
@@ -74,6 +78,10 @@ fn file_logger() -> Result<Box<WriteLogger<File>>, FileLoggerError> {
             .build(),
         file,
     ))
+}
+
+pub struct LoggingOptions {
+    pub no_color: bool,
 }
 
 /// Represents a failure to open a file for the purpose of writing logs to it

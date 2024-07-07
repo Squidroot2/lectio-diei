@@ -39,15 +39,27 @@ const WARNING_YELLOW: Color = Color::Rgb(250, 190, 75);
 ///
 /// Since the properties of the simplelog::Config are private to the the crate, we can't use it. Instead we are using a custom config struct
 pub struct ColorConfig {
-    error_color: Color,
-    warn_color: Color,
-    info_color: Color,
-    debug_color: Color,
-    trace_color: Color,
+    error_color: Option<Color>,
+    warn_color: Option<Color>,
+    info_color: Option<Color>,
+    debug_color: Option<Color>,
+    trace_color: Option<Color>,
 }
 
 impl ColorConfig {
-    fn for_level(&self, level: Level) -> Color {
+    /// Disables color. Useful when being redirected to a file
+    pub fn no_color() -> Self {
+        Self {
+            error_color: None,
+            warn_color: None,
+            info_color: None,
+            debug_color: None,
+            trace_color: None,
+        }
+    }
+
+    /// Gets the color for the given level
+    fn for_level(&self, level: Level) -> Option<Color> {
         match level {
             Level::Error => self.error_color,
             Level::Warn => self.warn_color,
@@ -61,11 +73,11 @@ impl ColorConfig {
 impl Default for ColorConfig {
     fn default() -> Self {
         Self {
-            error_color: ERROR_RED,
-            warn_color: WARNING_YELLOW,
-            info_color: Color::Green,
-            debug_color: Color::White,
-            trace_color: Color::Black,
+            error_color: Some(ERROR_RED),
+            warn_color: Some(WARNING_YELLOW),
+            info_color: Some(Color::Green),
+            debug_color: Some(Color::White),
+            trace_color: Some(Color::Black),
         }
     }
 }
@@ -110,7 +122,7 @@ impl ColorfulLogger {
     }
 
     fn try_log_term(&self, record: &Record<'_>, terminal_stream: &mut BufferedStandardStream) -> Result<(), Error> {
-        let color = Some(self.config.for_level(record.level()));
+        let color = self.config.for_level(record.level());
 
         // Ignore error
         terminal_stream.set_color(ColorSpec::new().set_fg(color))?;

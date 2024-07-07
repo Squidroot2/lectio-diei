@@ -5,7 +5,7 @@ use lectio_diei::args::{Arguments, Command};
 use lectio_diei::commands::{self};
 use lectio_diei::config::Config;
 use lectio_diei::error::ApplicationError;
-use lectio_diei::logging;
+use lectio_diei::logging::{self, LoggingOptions};
 use log::*;
 
 #[tokio::main]
@@ -19,8 +19,8 @@ async fn main() -> ExitCode {
 }
 
 async fn run() -> Result<(), ApplicationError> {
-    logging::init_logger();
     let args = Arguments::parse();
+    logging::init_logger(LoggingOptions { no_color: args.no_color });
     let config = Config::from_file_or_default();
 
     match args.command {

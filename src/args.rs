@@ -5,6 +5,10 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 pub struct Arguments {
     #[command(subcommand)]
     pub command: Command,
+
+    /// Disabled colors for STDERR and STDOUT. Use if terminal does not support colors or redirecting to file
+    #[arg(long)]
+    pub no_color: bool,
 }
 
 #[derive(Subcommand)]
