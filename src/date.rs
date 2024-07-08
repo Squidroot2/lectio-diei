@@ -7,23 +7,33 @@ use sqlx::{
     Decode, Type,
 };
 
-/// Type checked String used for url retrieval and database ids
+/// The str used for chrono formatting from date to DateId.
+/// Represents a format like 040124 (April 1st, 2024)
+const DATE_ID_FORMAT: &str = "%m%d%y";
+
+/// Type-checked String used for url retrieval and database ids
 #[derive(Debug)]
 pub struct DateId {
     value: String,
 }
 
 impl DateId {
+    /// Reference to inner value
+    /// Use this for binding to sqlx queries because implementing the Encode trait is more work than it's worth
     pub fn as_str(&self) -> &str {
         &self.value
     }
 
+    /// Gets the DateId for today, local time
     pub fn today() -> Self {
         Self::from(&Local::now())
     }
 
+    /// Checks that a given str is a valid DateId before returning it
+    ///
+    /// First converts to a NaiveDate, then  back to a String for storage within DateId struct
     pub fn checked_from_str(date_string: &str) -> Result<Self, ParseError> {
-        let date = NaiveDate::parse_from_str(date_string, "%m%d%y")?;
+        let date = NaiveDate::parse_from_str(date_string, DATE_ID_FORMAT)?;
         Ok(Self::from(&date))
     }
 }
@@ -36,14 +46,14 @@ impl Display for DateId {
 
 impl From<&DateTime<Local>> for DateId {
     fn from(date: &DateTime<Local>) -> Self {
-        let value = date.format("%m%d%y").to_string();
+        let value = date.format(DATE_ID_FORMAT).to_string();
         Self { value }
     }
 }
 
 impl From<&NaiveDate> for DateId {
     fn from(date: &NaiveDate) -> Self {
-        let value = date.format("%m%d%y").to_string();
+        let value = date.format(DATE_ID_FORMAT).to_string();
         Self { value }
     }
 }
@@ -75,5 +85,19 @@ mod tests {
         let date = Local.with_ymd_and_hms(2024, 07, 14, 0, 0, 0).unwrap();
         let date_id = DateId::from(&date);
         assert_eq!(date_id.as_str(), "071424");
+    }
+
+    #[test]
+    fn checked_from_str_success() {
+        let date = "070707";
+        let id = DateId::checked_from_str(date);
+        assert_eq!(date, id.unwrap().as_str());
+    }
+
+    #[test]
+    fn checked_from_str_error() {
+        assert!(DateId::checked_from_str("0707071").is_err());
+        assert!(DateId::checked_from_str("0707").is_err());
+        assert!(DateId::checked_from_str("June12").is_err());
     }
 }

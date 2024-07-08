@@ -12,12 +12,14 @@ use toml::de;
 
 use crate::lectionary::ReadingName;
 
+/// Represents a terminating error in the application. Each variant is associated with an exit code
 #[derive(Debug)]
 pub enum ApplicationError {
     NotImplemented,
     BadArgument(ArgumentError),
     DatabaseError(DatabaseError),
     RetrievalError(RetrievalError),
+    InitConfigError(InitConfigError),
 }
 
 impl ApplicationError {
@@ -26,6 +28,7 @@ impl ApplicationError {
             Self::BadArgument(_) => 3,
             Self::DatabaseError(_) => 4,
             Self::RetrievalError(_) => 5,
+            Self::InitConfigError(_) => 6,
             Self::NotImplemented => 100,
         }
     }
@@ -37,6 +40,7 @@ impl Display for ApplicationError {
             Self::BadArgument(e) => write!(f, "Bad arugment: {}", e),
             Self::DatabaseError(e) => write!(f, "Fatal database error: {}", e),
             Self::RetrievalError(e) => write!(f, "Can't display lectionary: {}", e),
+            Self::InitConfigError(e) => write!(f, "Failed to initialize config file: {}", e),
             Self::NotImplemented => write!(f, "Functionality Not Implemented"),
         }
     }
@@ -48,6 +52,7 @@ impl Error for ApplicationError {
             Self::BadArgument(e) => Some(e),
             Self::DatabaseError(e) => Some(e),
             Self::RetrievalError(e) => Some(e),
+            Self::InitConfigError(e) => Some(e),
             Self::NotImplemented => None,
         }
     }
@@ -58,22 +63,24 @@ impl From<DatabaseInitError> for ApplicationError {
         Self::from(DatabaseError::InitError(value))
     }
 }
-
 impl From<DatabaseError> for ApplicationError {
     fn from(value: DatabaseError) -> Self {
         Self::DatabaseError(value)
     }
 }
-
 impl From<ArgumentError> for ApplicationError {
     fn from(value: ArgumentError) -> Self {
         Self::BadArgument(value)
     }
 }
-
 impl From<RetrievalError> for ApplicationError {
     fn from(value: RetrievalError) -> Self {
         Self::RetrievalError(value)
+    }
+}
+impl From<InitConfigError> for ApplicationError {
+    fn from(value: InitConfigError) -> Self {
+        Self::InitConfigError(value)
     }
 }
 
@@ -328,7 +335,8 @@ impl From<String> for ReadingNameFromStringError {
 #[derive(Debug)]
 pub enum ReadConfigError {
     CannotGetPath(PathError),
-    CannotOpenFile(io::Error),
+    NotFound(io::Error),
+    IOError(io::Error),
     DeserializationError(de::Error),
 }
 
@@ -336,7 +344,8 @@ impl fmt::Display for ReadConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::CannotGetPath(e) => write!(f, "Cannot get path to config file: {}", e),
-            Self::CannotOpenFile(e) => write!(f, "Cannot read config file: {}", e),
+            Self::NotFound(e) => write!(f, "Missing config file: {}", e),
+            Self::IOError(e) => write!(f, "I/O Error encountered while reading config: {}", e),
             Self::DeserializationError(e) => write!(f, "Failed to deserialize config file: {}", e),
         }
     }
@@ -345,7 +354,8 @@ impl Error for ReadConfigError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::CannotGetPath(e) => Some(e),
-            Self::CannotOpenFile(e) => Some(e),
+            Self::NotFound(e) => Some(e),
+            Self::IOError(e) => Some(e),
             Self::DeserializationError(e) => Some(e),
         }
     }
@@ -357,7 +367,10 @@ impl From<PathError> for ReadConfigError {
 }
 impl From<io::Error> for ReadConfigError {
     fn from(value: io::Error) -> Self {
-        Self::CannotOpenFile(value)
+        match value.kind() {
+            io::ErrorKind::NotFound => Self::NotFound(value),
+            _ => Self::IOError(value),
+        }
     }
 }
 impl From<de::Error> for ReadConfigError {
@@ -365,6 +378,46 @@ impl From<de::Error> for ReadConfigError {
         Self::DeserializationError(value)
     }
 }
+
+/// Represents a failure to create a new config file
+#[derive(Debug)]
+pub enum InitConfigError {
+    AlreadyExists(io::Error),
+    CannotGetPath(PathError),
+    IOError(io::Error),
+}
+impl fmt::Display for InitConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::AlreadyExists(_) => write!(f, "Config file already exists"),
+            Self::CannotGetPath(e) => write!(f, "Cannot get path for config file: {}", e),
+            Self::IOError(e) => write!(f, "I/O Error encountered while initializing config: {}", e),
+        }
+    }
+}
+impl Error for InitConfigError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::AlreadyExists(e) => Some(e),
+            Self::CannotGetPath(e) => Some(e),
+            Self::IOError(e) => Some(e),
+        }
+    }
+}
+impl From<PathError> for InitConfigError {
+    fn from(value: PathError) -> Self {
+        Self::CannotGetPath(value)
+    }
+}
+impl From<io::Error> for InitConfigError {
+    fn from(value: io::Error) -> Self {
+        match value.kind() {
+            io::ErrorKind::AlreadyExists => Self::AlreadyExists(value),
+            _ => Self::IOError(value),
+        }
+    }
+}
+
 /// Represents a failure to identify a file path
 #[derive(Debug)]
 pub enum PathError {

@@ -1,6 +1,8 @@
 use log::*;
 
-use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError};
+use crate::args::ConfigCommand;
+use crate::config::Config;
+use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError, InitConfigError};
 use crate::{
     args::{DatabaseCommand, DisplayReadingsArgs},
     date::DateId,
@@ -8,7 +10,9 @@ use crate::{
     orchestration,
 };
 
-/// Command to display a day
+/// Command: display
+///
+/// Displays a day, either today or the given one.
 pub async fn display(maybe_date_string: Option<String>, readings: DisplayReadingsArgs) -> Result<(), ApplicationError> {
     let date_id = match maybe_date_string {
         Some(date_string) => DateId::checked_from_str(&date_string).map_err(ArgumentError::InvalidDate)?,
@@ -24,6 +28,7 @@ pub async fn display(maybe_date_string: Option<String>, readings: DisplayReading
         .map_err(ApplicationError::RetrievalError)
 }
 
+/// Command: db
 pub async fn handle_db_command(command: DatabaseCommand) -> Result<(), ApplicationError> {
     match command {
         DatabaseCommand::Remove { dates } => remove_entries(dates).await.map_err(ApplicationError::from),
@@ -31,7 +36,16 @@ pub async fn handle_db_command(command: DatabaseCommand) -> Result<(), Applicati
     }
 }
 
-/// Subcommand for db. Counts number of lectionaries and prints that to STDOUT
+/// Command: config
+pub fn handle_config_command(command: ConfigCommand) -> Result<(), ApplicationError> {
+    match command {
+        ConfigCommand::Init { force } => init_config(force).map_err(ApplicationError::from),
+    }
+}
+
+/// Subcommand: db count
+///
+/// Counts number of lectionaries and prints that to STDOUT
 async fn count_entries() -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
     let count = db.get_lectionary_count().await.map_err(DatabaseGetError::from)?;
@@ -39,7 +53,9 @@ async fn count_entries() -> Result<(), DatabaseError> {
     Ok(println!("{}", count))
 }
 
-/// Subcommand for db. Removes a list of entries. Sends removed count to STDOUT
+/// Subcommand: db remove
+///
+/// Removes a list of entries. Sends removed count to STDOUT
 async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitError> {
     let date_ids: Vec<DateId> = date_strings
         .iter()
@@ -67,4 +83,19 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
     }
 
     Ok(println!("{}", removed_count))
+}
+
+/// Subcomand: config init
+fn init_config(force: bool) -> Result<(), InitConfigError> {
+    match Config::initialize_default_config(force) {
+        Ok(()) => Ok(println!("success")),
+        Err(e) => {
+            if matches!(e, InitConfigError::AlreadyExists(_)) && !force {
+                warn!("Config file already exists. Must use '--force' to overwrite existing file");
+                // We'll pretend the command was successful here (unless force was specificed in which case something really weird happened)
+                return Ok(());
+            }
+            Err(e)
+        }
+    }
 }

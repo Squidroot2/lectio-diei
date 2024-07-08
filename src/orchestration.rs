@@ -22,7 +22,7 @@ async fn retrieve_lectionary(date_id: DateId) -> Result<Lectionary, RetrievalErr
     }
 }
 
-/// Returns a Lectionary for displaying. First tries, the database. If that fails, retrieves from the web and stores in to database.
+/// Returns a Lectionary for displaying. First tries the database. If that fails, retrieves from the web and stores in to database.
 async fn retrieve_and_store(date_id: DateId, db: &DatabaseHandle) -> Result<Lectionary, RetrievalError> {
     let lectionary = match db.get_lectionary(&date_id).await {
         Ok(lectionary) => {

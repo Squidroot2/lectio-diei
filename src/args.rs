@@ -6,8 +6,10 @@ pub struct Arguments {
     #[command(subcommand)]
     pub command: Command,
 
-    /// Disabled colors for STDERR and STDOUT. Use if terminal does not support colors or redirecting to file
-    #[arg(long)]
+    /// Disables colors
+    ///
+    /// Output for STDERR and STDOUT will not print with ANSI color codes. Useful if terminal does not support colors or redirecting to file
+    #[arg(long, global = true)]
     pub no_color: bool,
 }
 
@@ -28,7 +30,10 @@ pub enum Command {
         command: DatabaseCommand,
     },
     /// View and change the config//TODO
-    Config {},
+    Config {
+        #[command(subcommand)]
+        command: ConfigCommand,
+    },
 }
 
 #[derive(Subcommand)]
@@ -41,6 +46,16 @@ pub enum DatabaseCommand {
     },
     /// Gets a count of the rows in the db. Writes num to STDOUT
     Count,
+}
+
+#[derive(Subcommand)]
+pub enum ConfigCommand {
+    /// Initializes the data at the default location
+    Init {
+        /// Overrides file if it exists
+        #[arg(short, long)]
+        force: bool,
+    },
 }
 
 #[derive(Args)]
