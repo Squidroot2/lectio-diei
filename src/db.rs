@@ -12,6 +12,7 @@ use crate::error::{DatabaseGetError, DatabaseInitError};
 use crate::lectionary::{Lectionary, Reading};
 use crate::path::{self};
 
+#[derive(Clone)]
 pub struct DatabaseHandle {
     connection: SqlitePool,
 }
@@ -83,11 +84,34 @@ impl DatabaseHandle {
         }
     }
 
+    pub async fn remove_all(&self) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query("DELETE FROM lectionary").execute(&self.connection).await?;
+
+        Ok(result.rows_affected())
+    }
+
     pub async fn get_lectionary_count(&self) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("SELECT COUNT(*) FROM lectionary").fetch_one(&self.connection).await?;
 
         // This is a safe cast because we know the row count will never be negative
         result.try_get::<'_, i32, _>(0).map(|signed| signed as u64)
+    }
+
+    /// Determines if a lectionary with a given id is present
+    ///
+    /// More efficient than get_lectionary because it doesn't try to decode the whole reading
+    pub async fn lectionary_present(&self, id: &DateId) -> Result<bool, sqlx::Error> {
+        sqlx::query("SELECT id FROM lectionary WHERE id=$1")
+            .bind(id.as_str())
+            .fetch_optional(&self.connection)
+            .await
+            .map(|success| success.is_some())
+    }
+
+    pub async fn get_lectionary_rows(&self) -> Result<Vec<LectionaryRow>, sqlx::Error> {
+        sqlx::query_as::<_, LectionaryRow>("SELECT id, name FROM lectionary")
+            .fetch_all(&self.connection)
+            .await
     }
 
     async fn get_reading_row(&self, lect_id: &DateId, reading_type: DbReadingType) -> Result<ReadingRow, sqlx::Error> {
@@ -150,10 +174,22 @@ pub struct LectionaryDbEntity {
     pub second_reading_row: Option<ReadingRow>,
 }
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, PartialEq, Eq)]
 pub struct LectionaryRow {
     pub id: DateId,
     pub name: String,
+}
+
+impl PartialOrd for LectionaryRow {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for LectionaryRow {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.id.cmp(&other.id)
+    }
 }
 
 #[derive(Debug, FromRow)]

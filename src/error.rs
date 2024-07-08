@@ -18,6 +18,7 @@ pub enum ApplicationError {
     NotImplemented,
     BadArgument(ArgumentError),
     DatabaseError(DatabaseError),
+    /// Could not retrieve from database or web
     RetrievalError(RetrievalError),
     InitConfigError(InitConfigError),
 }
@@ -106,6 +107,8 @@ impl Error for ArgumentError {
 }
 
 /// A failure to retrieve a lectionary from the database, web, or both
+///
+/// Used when trying to display a Lectionary
 #[derive(Debug)]
 pub struct RetrievalError {
     db_error: Option<DatabaseError>,
@@ -147,6 +150,41 @@ impl From<WebGetError> for RetrievalError {
     }
 }
 
+/// Represents a failure to update the database with new entries
+#[derive(Debug)]
+pub enum DbUpdateError {
+    /// Failure to retrieve from Web
+    RetrieveError(WebGetError),
+    /// Failure to insert the retrieved lectionary in to database
+    InsertError(sqlx::Error),
+}
+impl Display for DbUpdateError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::RetrieveError(e) => write!(f, "Could not retrieve lectionary for storage: {}", e),
+            Self::InsertError(e) => write!(f, "Could not store retrieved lectionary in database: {}", e),
+        }
+    }
+}
+impl Error for DbUpdateError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::RetrieveError(e) => Some(e),
+            Self::InsertError(e) => Some(e),
+        }
+    }
+}
+impl From<WebGetError> for DbUpdateError {
+    fn from(value: WebGetError) -> Self {
+        Self::RetrieveError(value)
+    }
+}
+impl From<sqlx::Error> for DbUpdateError {
+    fn from(value: sqlx::Error) -> Self {
+        Self::InsertError(value)
+    }
+}
+
 #[derive(Debug)]
 pub enum WebGetError {
     ClientError(reqwest::Error),
@@ -177,10 +215,12 @@ impl Error for WebGetError {
     }
 }
 
+/// Represents a critical failure while working with the database
 #[derive(Debug)]
 pub enum DatabaseError {
     InitError(DatabaseInitError),
     GetError(DatabaseGetError),
+    DeleteError(sqlx::Error),
 }
 
 impl Display for DatabaseError {
@@ -188,6 +228,7 @@ impl Display for DatabaseError {
         match self {
             Self::InitError(e) => write!(f, "{}", e),
             Self::GetError(e) => write!(f, "{}", e),
+            Self::DeleteError(e) => write!(f, "Failed to delete row(s) from the database: {}", e),
         }
     }
 }
@@ -197,6 +238,7 @@ impl Error for DatabaseError {
         match self {
             Self::InitError(e) => Some(e),
             Self::GetError(e) => Some(e),
+            Self::DeleteError(e) => Some(e),
         }
     }
 }
@@ -322,7 +364,7 @@ pub struct ReadingNameFromStringError {
 impl std::error::Error for ReadingNameFromStringError {}
 impl fmt::Display for ReadingNameFromStringError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Invalid reading name: {}", self.value)
+        write!(f, "Unknown reading name: {}", self.value)
     }
 }
 impl From<String> for ReadingNameFromStringError {

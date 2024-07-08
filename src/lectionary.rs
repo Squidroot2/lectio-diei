@@ -146,7 +146,7 @@ impl ParsedReadings {
                         },
                         Err(e) => error!("Failed to process element '{}'; Reason: {}", name, e),
                     },
-                    Err(e) => error!("Failed to convert name to ReadingName: {}", e),
+                    Err(e) => warn!("Unable to identify reading name: {}", e),
                 };
             } else {
                 error!("Found reading element with no name element");
@@ -166,8 +166,8 @@ pub enum ReadingName {
     Alleluia,
 }
 impl ReadingName {
-    const READING1: &'static str = "Reading 1";
-    const READING2: &'static str = "Reading 2";
+    const READING1: &'static str = "Reading I";
+    const READING2: &'static str = "Reading II";
     const PSALM: &'static str = "Responsorial Psalm";
     const GOSPEL: &'static str = "Gospel";
     const ALLELUIA: &'static str = "Alleluia";
@@ -194,6 +194,8 @@ impl TryFrom<String> for ReadingName {
         let trimmed = value.trim();
         trace!("trimmed reading value: {}", trimmed);
         match trimmed {
+            "Reading 1" => Ok(Self::Reading1),
+            "Reading 2" => Ok(Self::Reading2),
             Self::READING1 => Ok(Self::Reading1),
             Self::READING2 => Ok(Self::Reading2),
             Self::PSALM => Ok(Self::Psalm),

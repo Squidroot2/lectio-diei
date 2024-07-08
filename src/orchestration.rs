@@ -3,7 +3,7 @@ use log::*;
 use crate::client::WebClient;
 use crate::date::DateId;
 use crate::db::DatabaseHandle;
-use crate::error::{DatabaseError, RetrievalError};
+use crate::error::{DatabaseError, DbUpdateError, RetrievalError};
 use crate::lectionary::Lectionary;
 
 /// Retrieves lectionary from db and web and attempts to store it before printing to STDOUT
@@ -48,11 +48,51 @@ async fn retrieve_and_store(date_id: DateId, db: &DatabaseHandle) -> Result<Lect
                         "Failed to retrieve from web ({}) after failing to retrieve from database",
                         web_error
                     );
-                    //TODO better error here
                     return Err(RetrievalError::from(web_error));
                 }
             }
         }
     };
     Ok(lectionary)
+}
+
+/// Stores a lectionary to the database, if it is not stored already
+///
+/// Returns true if new lectionary was stored, false if no action taken
+pub async fn ensure_stored(date_id: DateId, db: &DatabaseHandle, client: &WebClient) -> Result<bool, DbUpdateError> {
+    let is_present = match db.lectionary_present(&date_id).await {
+        Ok(is_present) => is_present,
+        Err(e) => {
+            warn!(
+                "Could not access database to determine if {} is present ({}). Will attempt web retrieval",
+                &date_id, e
+            );
+            false
+        }
+    };
+    if is_present {
+        Ok(false)
+    } else {
+        debug!("Retrieving lectionary with id '{}' from web", &date_id);
+        retrieve_for_database(date_id, db, client).await.map(|_| true)
+    }
+}
+
+async fn retrieve_for_database(date_id: DateId, db: &DatabaseHandle, client: &WebClient) -> Result<(), DbUpdateError> {
+    match client.get_for_date_id(date_id).await {
+        Ok(lectionary) => {
+            info!("Retrieved lectionary '{}'; Adding to database", lectionary.get_id());
+            match db.insert_lectionary(&lectionary).await.map_err(DbUpdateError::from) {
+                Ok(()) => {
+                    info!("Successfully stored new lectionary '{}' to database", lectionary.get_id());
+                    Ok(())
+                }
+                Err(e) => {
+                    error!("Failed to store lectionary '{}' to database", lectionary.get_id());
+                    Err(e)
+                }
+            }
+        }
+        Err(web_error) => Err(web_error.into()),
+    }
 }

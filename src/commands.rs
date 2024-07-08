@@ -1,6 +1,8 @@
 use log::*;
+use tokio::task::JoinSet;
 
 use crate::args::ConfigCommand;
+use crate::client::WebClient;
 use crate::config::Config;
 use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError, InitConfigError};
 use crate::{
@@ -33,6 +35,9 @@ pub async fn handle_db_command(command: DatabaseCommand) -> Result<(), Applicati
     match command {
         DatabaseCommand::Remove { dates } => remove_entries(dates).await.map_err(ApplicationError::from),
         DatabaseCommand::Count => count_entries().await.map_err(ApplicationError::from),
+        DatabaseCommand::Update => update_db().await.map_err(ApplicationError::from),
+        DatabaseCommand::Show => show_db().await.map_err(ApplicationError::from),
+        DatabaseCommand::Purge => purge_db().await.map_err(ApplicationError::from),
     }
 }
 
@@ -83,6 +88,62 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
     }
 
     Ok(println!("{}", removed_count))
+}
+
+/// Subcommand db purge
+///
+/// Removes all rows from the database and writes the number of rows removed
+async fn purge_db() -> Result<(), DatabaseError> {
+    let db = DatabaseHandle::new().await?;
+    let entries_removed = db.remove_all().await.map_err(DatabaseError::DeleteError)?;
+
+    Ok(println!("{}", entries_removed))
+}
+
+/// Subcommand: db update
+///
+/// Retrieves entries from the web and stores in the database
+/// Entries retrieved will depend on the config settings
+async fn update_db() -> Result<(), DatabaseInitError> {
+    let db = DatabaseHandle::new().await?;
+    let web_client = WebClient::default();
+    let db_config = Config::from_file_or_default().database;
+    let date_ids = DateId::get_list(db_config.past_entries, db_config.future_entries);
+
+    let mut tasks = JoinSet::new();
+    for id in date_ids.into_iter() {
+        let thread_db = db.clone();
+        let thread_client = web_client.clone();
+        tasks.spawn(async move { orchestration::ensure_stored(id, &thread_db, &thread_client).await });
+    }
+
+    let mut count_added = 0;
+
+    while let Some(thread_result) = tasks.join_next().await {
+        match thread_result {
+            Err(e) => error!("Failed to store a lectionar (Thread panicked!): {}", e),
+            Ok(Err(e)) => error!("Failed to store a lectionary: {}", e),
+            Ok(Ok(new)) => {
+                if new {
+                    count_added += 1
+                }
+            }
+        }
+    }
+    Ok(println!("{}", count_added))
+}
+
+/// Subcommand: db show
+///
+/// Prints each lectionary row from the lectionary table of the database to STDOUT
+async fn show_db() -> Result<(), DatabaseError> {
+    let db = DatabaseHandle::new().await?;
+    let mut rows = db.get_lectionary_rows().await.map_err(DatabaseGetError::from)?;
+    rows.sort_unstable();
+    for row in rows {
+        println!("{} {}", row.id, row.name);
+    }
+    Ok(())
 }
 
 /// Subcomand: config init

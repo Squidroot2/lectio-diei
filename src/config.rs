@@ -17,7 +17,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
-    database: DbConfig,
+    pub database: DbConfig,
 }
 
 impl Config {
@@ -135,9 +135,9 @@ impl Config {
 }
 
 #[derive(Serialize, Deserialize)]
-struct DbConfig {
-    future_entries: u32,
-    past_entries: u32,
+pub struct DbConfig {
+    pub future_entries: u32,
+    pub past_entries: u32,
 }
 
 impl Default for DbConfig {

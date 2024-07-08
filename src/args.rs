@@ -38,7 +38,9 @@ pub enum Command {
 
 #[derive(Subcommand)]
 pub enum DatabaseCommand {
-    /// Removes specified date(s) from database if present. Writes number removed to STDOUT
+    /// Removes specified date(s) from database if present.
+    ///
+    /// Writes number removed to STDOUT
     Remove {
         /// Dates to remove. Should be in MMddYY format
         #[arg(trailing_var_arg(true), num_args(1..usize::MAX))]
@@ -46,6 +48,14 @@ pub enum DatabaseCommand {
     },
     /// Gets a count of the rows in the db. Writes num to STDOUT
     Count,
+    /// Adds entries from the web to the database
+    Update,
+    /// Shows all of the lectionary rows in the database
+    Show,
+    /// Deletes all data in the database
+    ///
+    /// Writes number of rows removed to STDOUT
+    Purge,
 }
 
 #[derive(Subcommand)]

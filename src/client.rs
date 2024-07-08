@@ -7,7 +7,7 @@ use crate::error::WebGetError;
 use crate::lectionary::Lectionary;
 
 /// Client for interacting with the USCCB site
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct WebClient {
     client: Client,
 }
