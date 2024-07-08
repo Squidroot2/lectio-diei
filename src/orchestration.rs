@@ -3,13 +3,14 @@ use log::*;
 use crate::client::WebClient;
 use crate::date::DateId;
 use crate::db::DatabaseHandle;
+use crate::display::DisplaySettings;
 use crate::error::{DatabaseError, DbUpdateError, RetrievalError};
 use crate::lectionary::Lectionary;
 
 /// Retrieves lectionary from db and web and attempts to store it before printing to STDOUT
-pub async fn retrieve_and_display(date_id: DateId) -> Result<(), RetrievalError> {
+pub async fn retrieve_and_display(date_id: DateId, settings: DisplaySettings) -> Result<(), RetrievalError> {
     let lectionary = retrieve_lectionary(date_id).await?;
-    lectionary.pretty_print();
+    lectionary.pretty_print(settings);
     Ok(())
 }
 
@@ -71,6 +72,7 @@ pub async fn ensure_stored(date_id: DateId, db: &DatabaseHandle, client: &WebCli
         }
     };
     if is_present {
+        info!("Lectionary '{}' is already present in the database", date_id);
         Ok(false)
     } else {
         debug!("Retrieving lectionary with id '{}' from web", &date_id);

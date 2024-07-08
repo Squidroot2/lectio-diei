@@ -76,31 +76,6 @@ impl Lectionary {
     pub fn get_reading_2(&self) -> Option<&Reading> {
         self.reading_2.as_ref()
     }
-    pub fn pretty_print(&self) {
-        let dash_length = self.day_name.len() + 4;
-        let mut dashes = String::new();
-        for _ in 0..dash_length {
-            dashes.push('-')
-        }
-        println!("{}", dashes);
-        println!("| {} |", self.day_name);
-        println!("{}", dashes);
-
-        println!("{} ({})", ReadingName::READING1, self.reading_1.location);
-        println!("{}", dashes);
-        //TODO clean up the stored text so that there is no need to replace new lines
-        println!("{}", self.reading_1.text.replace('\n', " "));
-
-        println!("{}", dashes);
-        println!("{} ({})", ReadingName::PSALM, self.resp_psalm.location);
-        println!("{}", dashes);
-        println!("{}", self.resp_psalm.text);
-
-        println!("{}", dashes);
-        println!("{} ({})", ReadingName::GOSPEL, self.gospel.location);
-        println!("{}", dashes);
-        println!("{}", self.gospel.text.replace('\n', " "))
-    }
 }
 
 impl From<LectionaryDbEntity> for Lectionary {
@@ -172,7 +147,7 @@ impl ReadingName {
     const GOSPEL: &'static str = "Gospel";
     const ALLELUIA: &'static str = "Alleluia";
 
-    fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             Self::Reading1 => Self::READING1,
             Self::Reading2 => Self::READING2,

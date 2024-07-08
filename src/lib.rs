@@ -9,6 +9,7 @@ mod client;
 mod colorful_logger;
 mod config;
 mod db;
+mod display;
 mod html;
 mod lectionary;
 mod path;

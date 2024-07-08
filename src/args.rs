@@ -6,6 +6,12 @@ pub struct Arguments {
     #[command(subcommand)]
     pub command: Command,
 
+    #[command(flatten)]
+    pub common_args: CommonArguments,
+}
+
+#[derive(Args)]
+pub struct CommonArguments {
     /// Disables colors
     ///
     /// Output for STDERR and STDOUT will not print with ANSI color codes. Useful if terminal does not support colors or redirecting to file
@@ -51,6 +57,8 @@ pub enum DatabaseCommand {
     /// Adds entries from the web to the database
     Update,
     /// Shows all of the lectionary rows in the database
+    ///
+    /// Prints every row of the lectionary table, sorted by date, as "[date] [name]"
     Show,
     /// Deletes all data in the database
     ///
@@ -72,22 +80,33 @@ pub enum ConfigCommand {
 #[group(required = false, multiple = false)]
 pub struct DisplayReadingsArgs {
     /// Displays the readings in the specified order
-    #[arg(short, long, value_enum)]
-    readings: Option<Vec<ReadingArg>>,
+    #[arg(short, long, value_enum, num_args=1..)]
+    pub readings: Option<Vec<ReadingArg>>,
 
     /// Displays all readings in default order
     #[arg(short, long)]
-    all: bool,
+    pub all: bool,
 
     /// Only display the name of the day
     #[arg(long)]
-    day_only: bool,
+    pub day_only: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum ReadingArg {
+pub enum ReadingArg {
     Reading1,
     Psalm,
     Reading2,
     Gospel,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::CommandFactory;
+
+    #[test]
+    fn arguments_works() {
+        Arguments::command().debug_assert();
+    }
 }

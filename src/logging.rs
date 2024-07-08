@@ -6,7 +6,7 @@ use std::io;
 use log::*;
 use simplelog::{
     format_description, ColorChoice, CombinedLogger, ConfigBuilder, LevelFilter, LevelPadding, SharedLogger, TermLogger, TerminalMode,
-    WriteLogger,
+    ThreadPadding, WriteLogger,
 };
 
 use crate::{
@@ -39,6 +39,8 @@ fn init_combined(loggers: Vec<Box<dyn SharedLogger>>) {
 }
 
 /// Creates an uninitialized terminal logger
+///
+/// Unused but keeping it around for reference
 fn _terminal_logger() -> Box<TermLogger> {
     TermLogger::new(
         LevelFilter::Warn,
@@ -74,6 +76,7 @@ fn file_logger() -> Result<Box<WriteLogger<File>>, FileLoggerError> {
             .set_target_level(LevelFilter::Off)
             .set_level_padding(LevelPadding::Right)
             .set_thread_level(LevelFilter::Error)
+            .set_thread_padding(ThreadPadding::Left(2))
             .add_filter_allow_str(env!("CARGO_CRATE_NAME"))
             .build(),
         file,

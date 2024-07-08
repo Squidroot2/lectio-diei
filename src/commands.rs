@@ -1,9 +1,10 @@
 use log::*;
 use tokio::task::JoinSet;
 
-use crate::args::ConfigCommand;
+use crate::args::{CommonArguments, ConfigCommand};
 use crate::client::WebClient;
 use crate::config::Config;
+use crate::display::DisplaySettings;
 use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError, InitConfigError};
 use crate::{
     args::{DatabaseCommand, DisplayReadingsArgs},
@@ -15,7 +16,11 @@ use crate::{
 /// Command: display
 ///
 /// Displays a day, either today or the given one.
-pub async fn display(maybe_date_string: Option<String>, readings: DisplayReadingsArgs) -> Result<(), ApplicationError> {
+pub async fn display(
+    maybe_date_string: Option<String>,
+    readings: DisplayReadingsArgs,
+    args: CommonArguments,
+) -> Result<(), ApplicationError> {
     let date_id = match maybe_date_string {
         Some(date_string) => DateId::checked_from_str(&date_string).map_err(ArgumentError::InvalidDate)?,
         None => {
@@ -25,14 +30,17 @@ pub async fn display(maybe_date_string: Option<String>, readings: DisplayReading
         }
     };
 
-    orchestration::retrieve_and_display(date_id)
+    let config = Config::from_file_or_default();
+    let settings = DisplaySettings::from_config_and_args(config, readings, args);
+
+    orchestration::retrieve_and_display(date_id, settings)
         .await
         .map_err(ApplicationError::RetrievalError)
 }
 
 /// Command: db
-pub async fn handle_db_command(command: DatabaseCommand) -> Result<(), ApplicationError> {
-    match command {
+pub async fn handle_db_command(subcommand: DatabaseCommand) -> Result<(), ApplicationError> {
+    match subcommand {
         DatabaseCommand::Remove { dates } => remove_entries(dates).await.map_err(ApplicationError::from),
         DatabaseCommand::Count => count_entries().await.map_err(ApplicationError::from),
         DatabaseCommand::Update => update_db().await.map_err(ApplicationError::from),
@@ -42,8 +50,8 @@ pub async fn handle_db_command(command: DatabaseCommand) -> Result<(), Applicati
 }
 
 /// Command: config
-pub fn handle_config_command(command: ConfigCommand) -> Result<(), ApplicationError> {
-    match command {
+pub fn handle_config_command(subcommand: ConfigCommand) -> Result<(), ApplicationError> {
+    match subcommand {
         ConfigCommand::Init { force } => init_config(force).map_err(ApplicationError::from),
     }
 }
