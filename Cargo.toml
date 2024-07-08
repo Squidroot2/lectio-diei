@@ -27,4 +27,4 @@ termcolor = "1.4.1"
 time = "0.3.36"
 tokio =  { version = "1.38", features = ["full"] }
 toml = "0.8.14"
-toml_edit = "0.22.14"
+toml_edit = "0.22.15"
