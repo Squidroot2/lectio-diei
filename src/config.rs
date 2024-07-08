@@ -93,14 +93,8 @@ impl Config {
         let basic_toml_string = toml::to_string(&Self::default()).unwrap();
         let mut doc = basic_toml_string.parse::<DocumentMut>().unwrap();
 
-        // Adds a header comment (Submitted a PR so that I can just use the decor of the document)
-        doc.iter_mut()
-            .next()
-            .unwrap()
-            .1
-            .as_table_mut()
-            .unwrap()
-            .decor_mut()
+        // Adds a header comment
+        doc.decor_mut()
             .set_prefix(format!("# GENERATED ON VERSION: {}\n\n", env!("CARGO_PKG_VERSION")));
 
         Self::set_key_comment(
