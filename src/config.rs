@@ -5,18 +5,21 @@ use std::{
     path::PathBuf,
 };
 
+use clap::ValueEnum;
 use log::*;
 use serde::{Deserialize, Serialize};
-use toml::de;
+use toml::{de, ser::ValueSerializer};
 use toml_edit::{self, DocumentMut};
 
 use crate::{
+    args::ReadingArg,
     error::{InitConfigError, ReadConfigError},
     path,
 };
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
+    pub display: DisplayConfig,
     pub database: DbConfig,
 }
 
@@ -99,6 +102,16 @@ impl Config {
 
         Self::set_key_comment(
             &mut doc,
+            "display",
+            "reading_order",
+            &format!(
+                "Defines which readings and what order. Possible values: {}\n# Use empty array to only display day",
+                ReadingArg::variant_string()
+            ),
+        );
+
+        Self::set_key_comment(
+            &mut doc,
             "database",
             "future_entries",
             "Number of days in to the future to try to keep in the database. Includes today (i.e. a value of 1 will only store today's readings)",
@@ -140,6 +153,36 @@ impl Default for DbConfig {
             future_entries: 30,
             past_entries: 0,
         }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DisplayConfig {
+    pub reading_order: Vec<ReadingArg>,
+}
+
+impl Default for DisplayConfig {
+    fn default() -> Self {
+        Self {
+            reading_order: vec![ReadingArg::Reading1, ReadingArg::Reading2, ReadingArg::Gospel],
+        }
+    }
+}
+
+impl ReadingArg {
+    /// Returns a string that represents all of the variants joined by commas
+    ///
+    /// Used for displaying a comment showing the possible options
+    fn variant_string() -> String {
+        let mut names = Vec::new();
+        for variant in Self::value_variants() {
+            let mut name_buffer = String::new();
+            let serializer = ValueSerializer::new(&mut name_buffer);
+            Serialize::serialize(variant, serializer).unwrap();
+            names.push(name_buffer);
+        }
+
+        names.join(", ")
     }
 }
 

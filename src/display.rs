@@ -34,11 +34,8 @@ impl ReadingsOptions {
         } else if args.all {
             return Self::All;
         }
-        //TODO use config instead of hard coded vec
-        Self::Specified(
-            args.readings
-                .unwrap_or(vec![ReadingArg::Reading1, ReadingArg::Reading2, ReadingArg::Gospel]),
-        )
+        // Prefer to use commandline arguments over config
+        Self::Specified(args.readings.unwrap_or(config.display.reading_order))
     }
 }
 

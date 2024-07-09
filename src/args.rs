@@ -1,4 +1,5 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -92,7 +93,8 @@ pub struct DisplayReadingsArgs {
     pub day_only: bool,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum ReadingArg {
     Reading1,
     Psalm,
