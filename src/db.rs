@@ -90,6 +90,27 @@ impl DatabaseHandle {
         Ok(result.rows_affected())
     }
 
+    /// Deletes old entries
+    ///
+    /// Returns the number of Succesfully removed rows
+    /// Only fails if cannot GET ids. Failure to remove will write errors to log but return Ok
+    pub async fn remove_older_than(&self, date: DateId) -> Result<u64, sqlx::Error> {
+        let all_ids = sqlx::query_as::<_, DateId>("SELECT id FROM lectionary")
+            .fetch_all(&self.connection)
+            .await?;
+        let old_ids = all_ids.into_iter().filter(|id| id < &date);
+        let mut count_removed = 0;
+        for id in old_ids {
+            if let Err(e) = self.remove_lectionary(&id).await {
+                error!("Failed to remove lectionary '{}' ({})", id, e);
+            } else {
+                info!("Succesfully removed lectionary '{}' during clean operation", id);
+                count_removed += 1;
+            }
+        }
+        Ok(count_removed)
+    }
+
     pub async fn get_lectionary_count(&self) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("SELECT COUNT(*) FROM lectionary").fetch_one(&self.connection).await?;
 

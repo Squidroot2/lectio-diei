@@ -53,9 +53,12 @@ pub enum DatabaseCommand {
         #[arg(trailing_var_arg(true), num_args(1..usize::MAX))]
         dates: Vec<String>,
     },
-    /// Gets a count of the rows in the db. Writes num to STDOUT
+    /// Gets a count of the rows in the db.
+    ///
+    /// Writes num to STDOUT
     Count,
     /// Adds entries from the web to the database
+    //TODO add arguments to override config
     Update,
     /// Shows all of the lectionary rows in the database
     ///
@@ -65,6 +68,13 @@ pub enum DatabaseCommand {
     ///
     /// Writes number of rows removed to STDOUT
     Purge,
+    /// Deletes old entries from the database
+    ///
+    /// Uses values defined in the config
+    Clean {
+        #[arg[short, long]]
+        all: bool,
+    },
 }
 
 #[derive(Subcommand)]

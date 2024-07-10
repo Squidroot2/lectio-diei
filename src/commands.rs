@@ -1,3 +1,4 @@
+use chrono::{Local, TimeDelta};
 use log::*;
 use tokio::task::JoinSet;
 
@@ -46,6 +47,7 @@ pub async fn handle_db_command(subcommand: DatabaseCommand) -> Result<(), Applic
         DatabaseCommand::Update => update_db().await.map_err(ApplicationError::from),
         DatabaseCommand::Show => show_db().await.map_err(ApplicationError::from),
         DatabaseCommand::Purge => purge_db().await.map_err(ApplicationError::from),
+        DatabaseCommand::Clean { all } => clean_db(all).await.map_err(ApplicationError::from),
     }
 }
 
@@ -98,7 +100,7 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
     Ok(println!("{}", removed_count))
 }
 
-/// Subcommand db purge
+/// Subcommand: db purge
 ///
 /// Removes all rows from the database and writes the number of rows removed
 async fn purge_db() -> Result<(), DatabaseError> {
@@ -106,6 +108,22 @@ async fn purge_db() -> Result<(), DatabaseError> {
     let entries_removed = db.remove_all().await.map_err(DatabaseError::DeleteError)?;
 
     Ok(println!("{}", entries_removed))
+}
+
+/// Subcommand: db clean
+///
+/// Removes rows that are too old in accordance with the config file
+/// If all is true, also removes entries that are too far in the future
+async fn clean_db(all: bool) -> Result<(), DatabaseError> {
+    let db = DatabaseHandle::new().await?;
+    let past_entries = Config::from_file_or_default().database.past_entries;
+    let earliest_date = Local::now() - TimeDelta::days(past_entries as i64);
+    let count = db
+        .remove_older_than(DateId::from(&earliest_date))
+        .await
+        .map_err(DatabaseError::DeleteError)?;
+
+    Ok(println!("{}", count))
 }
 
 /// Subcommand: db update

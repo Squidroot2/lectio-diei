@@ -3,6 +3,7 @@ use std::fmt::{self, Display};
 
 use chrono::format::ParseError;
 use chrono::{DateTime, Local, NaiveDate, TimeDelta};
+use sqlx::FromRow;
 use sqlx::{
     sqlite::{Sqlite, SqliteValueRef},
     Decode, Type,
@@ -13,16 +14,16 @@ use sqlx::{
 const DATE_ID_FORMAT: &str = "%m%d%y";
 
 /// Type-checked String used for url retrieval and database ids
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, FromRow)]
 pub struct DateId {
-    value: String,
+    id: String,
 }
 
 impl DateId {
     /// Reference to inner value
     /// Use this for binding to sqlx queries because implementing the Encode trait is more work than it's worth
     pub fn as_str(&self) -> &str {
-        &self.value
+        &self.id
     }
 
     /// Gets the DateId for today, local time
@@ -61,25 +62,25 @@ impl Display for DateId {
 
 impl From<&DateTime<Local>> for DateId {
     fn from(date: &DateTime<Local>) -> Self {
-        let value = date.format(DATE_ID_FORMAT).to_string();
-        Self { value }
+        let id = date.format(DATE_ID_FORMAT).to_string();
+        Self { id }
     }
 }
 
 impl From<&NaiveDate> for DateId {
     fn from(date: &NaiveDate) -> Self {
-        let value = date.format(DATE_ID_FORMAT).to_string();
-        Self { value }
+        let id = date.format(DATE_ID_FORMAT).to_string();
+        Self { id }
     }
 }
 
 impl<'r> Decode<'r, Sqlite> for DateId {
     fn decode(value_ref: SqliteValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
-        let value = <&str as Decode<Sqlite>>::decode(value_ref)?.to_owned();
-        debug_assert_eq!(6, value.len());
-        debug_assert!(value.chars().all(|c| c.is_numeric()));
+        let id = <&str as Decode<Sqlite>>::decode(value_ref)?.to_owned();
+        debug_assert_eq!(6, id.len());
+        debug_assert!(id.chars().all(|c| c.is_numeric()));
 
-        Ok(Self { value })
+        Ok(Self { id })
     }
 }
 
@@ -98,8 +99,8 @@ impl PartialOrd for DateId {
 impl Ord for DateId {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         // First compares years, then month-day
-        match self.value[4..6].cmp(&other.value[4..6]) {
-            Ordering::Equal => self.value[0..4].cmp(&other.value[0..4]),
+        match self.id[4..6].cmp(&other.id[4..6]) {
+            Ordering::Equal => self.id[0..4].cmp(&other.id[0..4]),
             ord => ord,
         }
     }
