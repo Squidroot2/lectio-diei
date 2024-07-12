@@ -17,18 +17,19 @@ use crate::{
 /// Command: display
 ///
 /// Displays a day, either today or the given one.
+/// # Errors
+///  Returns an `ApplicationError` if the command encounterd a fatal error
 pub async fn display(
     maybe_date_string: Option<String>,
     readings: DisplayReadingsArgs,
     args: CommonArguments,
 ) -> Result<(), ApplicationError> {
-    let date_id = match maybe_date_string {
-        Some(date_string) => DateId::checked_from_str(&date_string).map_err(ArgumentError::InvalidDate)?,
-        None => {
-            let today = DateId::today();
-            info!("No date specified. Using '{}'", today);
-            today
-        }
+    let date_id = if let Some(date_string) = maybe_date_string {
+        DateId::checked_from_str(&date_string).map_err(ArgumentError::InvalidDate)?
+    } else {
+        let today = DateId::today();
+        info!("No date specified. Using '{}'", today);
+        today
     };
 
     let config = Config::from_file_or_default();
@@ -40,6 +41,9 @@ pub async fn display(
 }
 
 /// Command: db
+///
+/// # Errors
+/// Returns an `ApplicationError` if the command encounterd a fatal error
 pub async fn handle_db_command(subcommand: DatabaseCommand) -> Result<(), ApplicationError> {
     match subcommand {
         DatabaseCommand::Remove { dates } => remove_entries(dates).await.map_err(ApplicationError::from),
@@ -52,6 +56,9 @@ pub async fn handle_db_command(subcommand: DatabaseCommand) -> Result<(), Applic
 }
 
 /// Command: config
+///
+/// # Errors
+/// Returns an `ApplicationError` if the config encountered a fatal error
 pub fn handle_config_command(subcommand: ConfigCommand) -> Result<(), ApplicationError> {
     match subcommand {
         ConfigCommand::Init { force } => init_config(force).map_err(ApplicationError::from),
@@ -65,7 +72,7 @@ async fn count_entries() -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
     let count = db.get_lectionary_count().await.map_err(DatabaseGetError::from)?;
 
-    Ok(println!("{}", count))
+    Ok(println!("{count}"))
 }
 
 /// Subcommand: db remove
@@ -74,10 +81,11 @@ async fn count_entries() -> Result<(), DatabaseError> {
 async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitError> {
     let date_ids: Vec<DateId> = date_strings
         .iter()
-        .filter_map(|date_string| match DateId::checked_from_str(date_string) {
-            Ok(date_id) => Some(date_id),
-            Err(_) => {
-                warn!("'{}' is not a valid date id. Skipping...", date_string);
+        .filter_map(|date_string| {
+            if let Ok(date_id) = DateId::checked_from_str(date_string) {
+                Some(date_id)
+            } else {
+                warn!("'{date_string}' is not a valid date id. Skipping...");
                 None
             }
         })
@@ -89,15 +97,15 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
         let remove_result = db.remove_lectionary(&id).await;
         match remove_result {
             Ok(true) => {
-                info!("Successfully removed lectionary '{}'", id);
-                removed_count += 1
+                info!("Successfully removed lectionary '{id}'");
+                removed_count += 1;
             }
-            Ok(false) => info!("Tried to remove lectionary '{}' but it was not present", id),
-            Err(e) => error!("Failed to remove lectionary '{}': {}", id, e),
+            Ok(false) => info!("Tried to remove lectionary '{id}' but it was not present"),
+            Err(e) => error!("Failed to remove lectionary '{id}': {e}"),
         };
     }
 
-    Ok(println!("{}", removed_count))
+    Ok(println!("{removed_count}"))
 }
 
 /// Subcommand: db purge
@@ -107,7 +115,7 @@ async fn purge_db() -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
     let entries_removed = db.remove_all().await.map_err(DatabaseError::DeleteError)?;
 
-    Ok(println!("{}", entries_removed))
+    Ok(println!("{entries_removed}"))
 }
 
 /// Subcommand: db clean
@@ -121,11 +129,11 @@ async fn clean_db(all: bool) -> Result<(), DatabaseError> {
         past_entries,
         future_entries,
     } = db_config;
-    let earliest_date = Local::now() - TimeDelta::days(past_entries as i64);
+    let earliest_date = Local::now() - TimeDelta::days(i64::from(past_entries));
 
     let latest_date_id: Option<DateId> = if all {
         let latest_date = Local::now() + TimeDelta::days(i64::from(future_entries));
-         Some(DateId::from(&latest_date))
+        Some(DateId::from(&latest_date))
     } else {
         None
     };
@@ -134,7 +142,7 @@ async fn clean_db(all: bool) -> Result<(), DatabaseError> {
         .await
         .map_err(DatabaseError::DeleteError)?;
 
-    Ok(println!("{}", count))
+    Ok(println!("{count}"))
 }
 
 /// Subcommand: db update
@@ -148,7 +156,7 @@ async fn update_db() -> Result<(), DatabaseInitError> {
     let date_ids = DateId::get_list(db_config.past_entries, db_config.future_entries);
 
     let mut tasks = JoinSet::new();
-    for id in date_ids.into_iter() {
+    for id in date_ids {
         let thread_db = db.clone();
         let thread_client = web_client.clone();
         tasks.spawn(async move { orchestration::ensure_stored(id, &thread_db, &thread_client).await });
@@ -162,12 +170,12 @@ async fn update_db() -> Result<(), DatabaseInitError> {
             Ok(Err(e)) => error!("Failed to store a lectionary: {}", e),
             Ok(Ok(new)) => {
                 if new {
-                    count_added += 1
+                    count_added += 1;
                 }
             }
         }
     }
-    Ok(println!("{}", count_added))
+    Ok(println!("{count_added}"))
 }
 
 /// Subcommand: db show

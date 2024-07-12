@@ -1,4 +1,4 @@
-//! Module for my custom logger, the ColorfulLogger
+//! Module for my custom logger, the `ColorfulLogger`
 
 // Module heavily based on the termlog module from the simplelog crate.
 // LICENSE for simplelog:
@@ -35,9 +35,9 @@ use simplelog::{Config, SharedLogger};
 const ERROR_RED: Color = Color::Rgb(225, 60, 45);
 const WARNING_YELLOW: Color = Color::Rgb(250, 190, 75);
 
-/// Defines the Colors for each log level
+/// Defines the `Color`s for each log level
 ///
-/// Since the properties of the simplelog::Config are private to the the crate, we can't use it. Instead we are using a custom config struct
+/// Since the properties of the `simplelog::Config` are private to the the crate, we can't use it. Instead we are using a custom config struct
 pub struct ColorConfig {
     error_color: Option<Color>,
     warn_color: Option<Color>,
@@ -82,9 +82,9 @@ impl Default for ColorConfig {
     }
 }
 
-/// The ColorfulLogger struct. Provides a stderr based, colorful Logger implementation.
+/// The `ColorfulLogger` struct. Provides a stderr based, colorful Logger implementation.
 ///
-/// Like the TermLogger from simplelog but colors the entire line rather than just the level
+/// Like the `TermLogger` from simplelog but colors the entire line rather than just the level
 pub struct ColorfulLogger {
     level: LevelFilter,
     config: ColorConfig,
@@ -111,6 +111,8 @@ impl ColorfulLogger {
     /// Takes the desired `Level` and `ColorConfig` as arguments. They cannot be changed later on.
     ///
     /// Returns a `Box`ed Colorful Logger
+    // reason: match simplelog API
+    #[allow(clippy::unnecessary_box_returns)]
     pub fn new(log_level: LevelFilter, config: ColorConfig) -> Box<ColorfulLogger> {
         let stream = BufferedStandardStream::stderr(ColorChoice::Always);
 

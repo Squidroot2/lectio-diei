@@ -39,23 +39,17 @@ impl Config {
                     // Going to create a config with force=true because if someone created a file in the clock cycles between failing to
                     //  retrieve and creating, they deserve to lose their config tbh
                     if let Err(create_error) = Self::create_config(&path, true) {
-                        error!("Failed to create config file ({})", create_error);
+                        error!("Failed to create config file ({create_error})");
                     }
                     Self::default()
                 }
                 Err(e) => {
-                    error!(
-                        "Failed to retrieve config from file: {}; Proceeding with default config settings",
-                        e
-                    );
+                    error!("Failed to retrieve config from file: {e}; Proceeding with default config settings",);
                     Self::default()
                 }
             },
             Err(e) => {
-                error!(
-                    "Failed to determine path for config file ({}); Proceeding with default config settings",
-                    e
-                );
+                error!("Failed to determine path for config file ({e}); Proceeding with default config settings",);
                 Self::default()
             }
         }
@@ -83,10 +77,7 @@ impl Config {
     /// Also fails on other IO error (permissions etc.)
     fn create_config(path: &PathBuf, force: bool) -> Result<(), io::Error> {
         let config_string = Self::default_document().to_string();
-        let mut file = match force {
-            true => File::create(path)?,
-            false => File::create_new(path)?,
-        };
+        let mut file = if force { File::create(path)? } else { File::create_new(path)? };
         file.write_all(config_string.as_bytes())
     }
 
@@ -127,9 +118,9 @@ impl Config {
 
     /// Puts a comment above a key.
     ///
-    /// Will panice if key doesn't exist. Should only be used by default_document() which is predictable and unit tested
+    /// Will panice if key doesn't exist. Should only be used by `default_document()` which is predictable and unit tested
     fn set_key_comment(doc: &mut DocumentMut, table: &str, key: &str, comment: &str) {
-        let formatted = format!("# {}\n", comment);
+        let formatted = format!("# {comment}\n");
         doc.get_mut(table)
             .unwrap()
             .as_table_mut()

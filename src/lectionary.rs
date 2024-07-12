@@ -14,9 +14,9 @@ use crate::html;
 
 /// Main container in which all other relevant elements are found
 static CONTAINER_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("#block-usccb-readings-content div.page-container").unwrap());
-/// Use within element found by CONTAINER_SELECTOR. Finds the element that has the name of the day (e.g. Fourteenth Sunday in Ordinary Time )
+/// Use within element found by `CONTAINER_SELECTOR`. Finds the element that has the name of the day (e.g. Fourteenth Sunday in Ordinary Time )
 static DAY_NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.b-lectionary div.innerblock :first-child").unwrap());
-/// Use within element found by CONTAINER_SELECTOR. Finds all the verse(aka reading) containers
+/// Use within element found by `CONTAINER_SELECTOR`. Finds all the verse(aka reading) containers
 static READINGS_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.b-verse").unwrap());
 
 #[derive(Debug)]
@@ -30,7 +30,7 @@ pub struct Lectionary {
 }
 
 impl Lectionary {
-    pub fn create_from_html(id: DateId, document: Html) -> Result<Self, LectionaryHtmlError> {
+    pub fn create_from_html(id: DateId, document: &Html) -> Result<Self, LectionaryHtmlError> {
         let container = document
             .select(&CONTAINER_SELECTOR)
             .next()
@@ -91,10 +91,10 @@ impl From<LectionaryDbEntity> for Lectionary {
     }
 }
 
-/// Use within a element found by READINGS_SELECTOR
+/// Use within a element found by `READINGS_SELECTOR`
 static READING_NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse(".name").unwrap());
 
-/// For temporary use while constructing a Lectionary from html
+/// For temporary use while constructing a `Lectionary` from html
 #[derive(Default)]
 struct ParsedReadings {
     reading_1: Option<Reading>,
@@ -169,10 +169,8 @@ impl TryFrom<String> for ReadingName {
         let trimmed = value.trim();
         trace!("trimmed reading value: {}", trimmed);
         match trimmed {
-            "Reading 1" => Ok(Self::Reading1),
-            "Reading 2" => Ok(Self::Reading2),
-            Self::READING1 => Ok(Self::Reading1),
-            Self::READING2 => Ok(Self::Reading2),
+            Self::READING1 | "Reading 1" => Ok(Self::Reading1),
+            Self::READING2 | "Reading 2" => Ok(Self::Reading2),
             Self::PSALM => Ok(Self::Psalm),
             Self::GOSPEL => Ok(Self::Gospel),
             Self::ALLELUIA => Ok(Self::Alleluia),
@@ -181,10 +179,10 @@ impl TryFrom<String> for ReadingName {
     }
 }
 
-/// Use within element found by READINGS_SELECTOR. The container with the actual text of the reading.
+/// Use within element found by `READINGS_SELECTOR`. The container with the actual text of the reading.
 static READING_CONTENT_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.content-body").unwrap());
 
-/// Use within element found by READINGS_SELECTOR. Finds the address (book, chapter, verse(s)) of the reading
+/// Use within element found by `READINGS_SELECTOR`. Finds the address (book, chapter, verse(s)) of the reading
 static READING_LOCATION_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.content-header div.address a").unwrap());
 
 #[derive(Debug)]

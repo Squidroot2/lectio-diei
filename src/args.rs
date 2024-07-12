@@ -11,7 +11,7 @@ pub struct Arguments {
     pub common_args: CommonArguments,
 }
 
-#[derive(Args)]
+#[derive(Args, Copy, Clone)]
 pub struct CommonArguments {
     /// Disables colors
     ///
@@ -79,7 +79,7 @@ pub enum DatabaseCommand {
     //TODO refresh, store
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Copy, Clone)]
 pub enum ConfigCommand {
     /// Initializes the data at the default location
     Init {

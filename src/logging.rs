@@ -18,7 +18,7 @@ use crate::{
 /// Initializes a combined logger included a terminal logger and a file logger. If file logger fails to be created, still initializes the terminal logger
 pub fn init_logger(options: LoggingOptions) {
     let mut loggers: Vec<Box<dyn SharedLogger>> = Vec::new();
-    loggers.push(color_logger(&options));
+    loggers.push(color_logger(options));
     match file_logger() {
         Ok(file_logger) => {
             loggers.push(file_logger);
@@ -26,7 +26,7 @@ pub fn init_logger(options: LoggingOptions) {
         }
         Err(e) => {
             init_combined(loggers);
-            error!("Failed to initialize file log: {}", e)
+            error!("Failed to initialize file log: {e}");
         }
     }
 }
@@ -34,13 +34,15 @@ pub fn init_logger(options: LoggingOptions) {
 /// Tries to initialize the given loggers into a combined logger
 fn init_combined(loggers: Vec<Box<dyn SharedLogger>>) {
     if CombinedLogger::init(loggers).is_err() {
-        error!("Tried to initialize logger after already initialized")
+        error!("Tried to initialize logger after already initialized");
     }
 }
 
 /// Creates an uninitialized terminal logger
 ///
 /// Unused but keeping it around for reference
+// Reason: CombinedLogger::init needs boxed values
+#[allow(clippy::unnecessary_box_returns)]
 fn _terminal_logger() -> Box<TermLogger> {
     TermLogger::new(
         LevelFilter::Warn,
@@ -55,10 +57,13 @@ fn _terminal_logger() -> Box<TermLogger> {
     )
 }
 
-fn color_logger(options: &LoggingOptions) -> Box<ColorfulLogger> {
-    let color_config = match options.no_color {
-        true => ColorConfig::no_color(),
-        false => ColorConfig::default(),
+// Reason: CombinedLogger::init needs boxed values
+#[allow(clippy::unnecessary_box_returns)]
+fn color_logger(options: LoggingOptions) -> Box<ColorfulLogger> {
+    let color_config = if options.no_color {
+        ColorConfig::no_color()
+    } else {
+        ColorConfig::default()
     };
     ColorfulLogger::new(LevelFilter::Warn, color_config)
 }
@@ -83,6 +88,7 @@ fn file_logger() -> Result<Box<WriteLogger<File>>, FileLoggerError> {
     ))
 }
 
+#[derive(Copy, Clone)]
 pub struct LoggingOptions {
     pub no_color: bool,
 }
@@ -97,8 +103,8 @@ enum FileLoggerError {
 impl fmt::Display for FileLoggerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::PathError(e) => write!(f, "Failed to get path to log: {}", e),
-            Self::FileOpenError(e) => write!(f, "Failed to open log file: {}", e),
+            Self::PathError(e) => write!(f, "Failed to get path to log: {e}"),
+            Self::FileOpenError(e) => write!(f, "Failed to open log file: {e}"),
         }
     }
 }

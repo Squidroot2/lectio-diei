@@ -8,13 +8,14 @@ use crate::{
 
 pub struct DisplaySettings {
     pub readings_to_display: ReadingsOptions,
-    pub no_color: bool,
+    //TODO handle color and no_color
+    pub _no_color: bool,
 }
 
 impl DisplaySettings {
     pub fn from_config_and_args(config: Config, reading_args: DisplayReadingsArgs, args: CommonArguments) -> Self {
         Self {
-            no_color: args.no_color,
+            _no_color: args.no_color,
             readings_to_display: ReadingsOptions::from_config_and_args(config, reading_args),
         }
     }
@@ -62,7 +63,7 @@ impl Lectionary {
 
     fn print_day_only(&self) {
         let dashes = self.get_dash_seperator();
-        self.print_day_name(&dashes)
+        self.print_day_name(&dashes);
     }
 
     /// Prints readings in a specified order
@@ -83,15 +84,15 @@ impl Lectionary {
         let dash_length = self.get_day_name().len() + 4;
         let mut dashes = String::with_capacity(dash_length);
         for _ in 0..dash_length {
-            dashes.push('-')
+            dashes.push('-');
         }
         dashes
     }
 
     fn print_day_name(&self, dashes: &str) {
-        println!("{}", dashes);
+        println!("{dashes}");
         println!("  {}  ", self.get_day_name());
-        println!("{}", dashes);
+        println!("{dashes}");
     }
 
     fn print_reading_one(&self, seperator: &str) {
@@ -114,13 +115,14 @@ impl Lectionary {
 
 impl Reading {
     pub fn pretty_print(&self, heading: &str, seperator: &str, preserve_newlines: bool) {
-        let text: Cow<'_, str> = match preserve_newlines {
-            true => Cow::Borrowed(self.get_text()),
-            false => Cow::Owned(self.get_text().replace('\n', " ")),
+        let text: Cow<'_, str> = if preserve_newlines {
+            Cow::Borrowed(self.get_text())
+        } else {
+            Cow::Owned(self.get_text().replace('\n', " "))
         };
-        println!("{} ({})", heading, self.get_location());
-        println!("{}", seperator);
-        println!("{}", text);
-        println!("{}", seperator);
+        println!("{heading} ({})", self.get_location());
+        println!("{seperator}");
+        println!("{text}");
+        println!("{seperator}");
     }
 }

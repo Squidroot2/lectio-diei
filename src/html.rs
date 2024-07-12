@@ -12,11 +12,13 @@ pub fn element_to_plain_text(element: &ElementRef) -> String {
             Node::Text(text) => {
                 plain_text.push_str(text.trim_matches('\n'));
             }
+            // reason: More html attributes may have special handling later
+            #[allow(clippy::single_match_else)]
             Node::Element(element) => match element.name() {
                 "br" => plain_text.push('\n'),
                 _ => {
                     let elmt_ref = ElementRef::wrap(node).expect("Node of value Element will always wrap to ElementRef");
-                    plain_text.push_str(&element_to_plain_text(&elmt_ref))
+                    plain_text.push_str(&element_to_plain_text(&elmt_ref));
                 }
             },
             _ => {}
@@ -26,7 +28,7 @@ pub fn element_to_plain_text(element: &ElementRef) -> String {
     plain_text.trim().to_string()
 }
 
-/// HashMap of expected html entities with their replacement character
+/// `HashMap` of expected html entities with their replacement character
 static HTML_ENTITIES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut map = HashMap::new();
     map.insert("&nbsp;", " ");
@@ -43,7 +45,7 @@ static HTML_ENTITIES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
 pub fn replace_entities(mut value: String) -> String {
     for (entity, target) in HTML_ENTITIES.iter() {
         if value.contains(entity) {
-            value = value.replace(entity, target)
+            value = value.replace(entity, target);
         }
     }
     value
@@ -56,7 +58,7 @@ mod tests {
 
     #[test]
     fn element_to_plain_text_works() {
-        let html = Html::parse_fragment(r#"<p>This is a <strong>test</strong> with some <br>extra&nbsp;stuff</p>"#);
+        let html = Html::parse_fragment(r"<p>This is a <strong>test</strong> with some <br>extra&nbsp;stuff</p>");
         assert_eq!(
             element_to_plain_text(&html.root_element()),
             "This is a test with some \nextra\u{a0}stuff"

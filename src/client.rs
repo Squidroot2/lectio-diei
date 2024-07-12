@@ -23,11 +23,11 @@ impl WebClient {
 
         let response_text = response.text().await.map_err(WebGetError::ResponseError)?;
         let document = Html::parse_document(&response_text);
-        Lectionary::create_from_html(date_id, document).map_err(WebGetError::ParseError)
+        Lectionary::create_from_html(date_id, &document).map_err(WebGetError::ParseError)
     }
 
     fn url_for_date(date_id: &DateId) -> Url {
-        let url_string = format!("https://bible.usccb.org/bible/readings/{}.cfm", date_id);
+        let url_string = format!("https://bible.usccb.org/bible/readings/{date_id}.cfm");
         Url::parse(&url_string).expect("Formmatted string is valid URL")
     }
 }

@@ -1,0 +1,4 @@
+# Having to change imports when changing log levels is annoying
+allowed-wildcard-imports = [ "log" ]
+# MMddYY is a format, not a variable
+doc-valid-idents = ["MMddYY", ".."]

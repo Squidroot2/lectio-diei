@@ -76,7 +76,7 @@ pub async fn ensure_stored(date_id: DateId, db: &DatabaseHandle, client: &WebCli
         Ok(false)
     } else {
         debug!("Retrieving lectionary with id '{}' from web", &date_id);
-        retrieve_for_database(date_id, db, client).await.map(|_| true)
+        retrieve_for_database(date_id, db, client).await.map(|()| true)
     }
 }
 

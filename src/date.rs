@@ -9,11 +9,11 @@ use sqlx::{
     Decode, Type,
 };
 
-/// The str used for chrono formatting from date to DateId.
+/// The str used for chrono formatting from date to `DateId`.
 /// Represents a format like 040124 (April 1st, 2024)
 const DATE_ID_FORMAT: &str = "%m%d%y";
 
-/// Type-checked String used for url retrieval and database ids
+/// Type-checked `String` used for url retrieval and database ids
 #[derive(Debug, PartialEq, Eq, FromRow)]
 pub struct DateId {
     id: String,
@@ -21,32 +21,32 @@ pub struct DateId {
 
 impl DateId {
     /// Reference to inner value
-    /// Use this for binding to sqlx queries because implementing the Encode trait is more work than it's worth
+    /// Use this for binding to `sqlx` queries because implementing the `Encode` trait is more work than it's worth
     pub fn as_str(&self) -> &str {
         &self.id
     }
 
-    /// Gets the DateId for today, local time
+    /// Gets the `DateId` for today, local time
     pub fn today() -> Self {
         Self::from(&Local::now())
     }
 
-    /// Checks that a given str is a valid DateId before returning it
+    /// Checks that a given `str` is a valid `DateId` before returning it
     ///
-    /// First converts to a NaiveDate, then  back to a String for storage within DateId struct
+    /// First converts to a `NaiveDate`, then  back to a `String` for storage within `DateId` struct
     pub fn checked_from_str(date_string: &str) -> Result<Self, ParseError> {
         let date = NaiveDate::parse_from_str(date_string, DATE_ID_FORMAT)?;
         Ok(Self::from(&date))
     }
 
-    /// Gets a list of DateIds for a range
+    /// Gets a list of `DateId`s for a range
     ///
-    /// Note that 'future_days' must include today (i.e. if future days is 0, today will not be included)
+    /// Note that `future_days` must include today (i.e. if future days is 0, today will not be included)
     pub fn get_list(past_days: u32, future_days: u32) -> Vec<DateId> {
         let length = past_days + future_days;
         let mut list = Vec::with_capacity(length as usize);
         let today = Local::now();
-        for delta in (0 - past_days as i64)..future_days as i64 {
+        for delta in (0 - i64::from(past_days))..i64::from(future_days) {
             let date = today + TimeDelta::days(delta);
             list.push(DateId::from(&date));
         }
@@ -78,7 +78,7 @@ impl<'r> Decode<'r, Sqlite> for DateId {
     fn decode(value_ref: SqliteValueRef<'r>) -> Result<Self, sqlx::error::BoxDynError> {
         let id = <&str as Decode<Sqlite>>::decode(value_ref)?.to_owned();
         debug_assert_eq!(6, id.len());
-        debug_assert!(id.chars().all(|c| c.is_numeric()));
+        debug_assert!(id.chars().all(char::is_numeric));
 
         Ok(Self { id })
     }
@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn get_date_string_correct() {
-        let date = Local.with_ymd_and_hms(2024, 07, 14, 0, 0, 0).unwrap();
+        let date = Local.with_ymd_and_hms(2024, 7, 14, 0, 0, 0).unwrap();
         let date_id = DateId::from(&date);
         assert_eq!(date_id.as_str(), "071424");
     }

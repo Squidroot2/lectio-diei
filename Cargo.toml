@@ -28,3 +28,10 @@ time = "0.3.36"
 tokio =  { version = "1.38", features = ["full"] }
 toml = "0.8.14"
 toml_edit = "0.22.15"
+
+[lints.clippy]
+pedantic = {level = "warn", priority = -1}
+
+# These lints limit naming conventions in ways I don't like
+module_name_repetitions = "allow"
+struct_field_names = "allow"

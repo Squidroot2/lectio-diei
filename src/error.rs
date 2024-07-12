@@ -24,6 +24,7 @@ pub enum ApplicationError {
 }
 
 impl ApplicationError {
+    #[must_use = "Return from main"]
     pub fn exit_code(&self) -> u8 {
         match self {
             Self::BadArgument(_) => 3,
@@ -38,10 +39,10 @@ impl ApplicationError {
 impl Display for ApplicationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::BadArgument(e) => write!(f, "Bad arugment: {}", e),
-            Self::DatabaseError(e) => write!(f, "Fatal database error: {}", e),
-            Self::RetrievalError(e) => write!(f, "Can't display lectionary: {}", e),
-            Self::InitConfigError(e) => write!(f, "Failed to initialize config file: {}", e),
+            Self::BadArgument(e) => write!(f, "Bad arugment: {e}"),
+            Self::DatabaseError(e) => write!(f, "Fatal database error: {e}"),
+            Self::RetrievalError(e) => write!(f, "Can't display lectionary: {e}"),
+            Self::InitConfigError(e) => write!(f, "Failed to initialize config file: {e}"),
             Self::NotImplemented => write!(f, "Functionality Not Implemented"),
         }
     }
@@ -93,7 +94,7 @@ pub enum ArgumentError {
 impl Display for ArgumentError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::InvalidDate(e) => write!(f, "Invalid date Argument: {}", e),
+            Self::InvalidDate(e) => write!(f, "Invalid date Argument: {e}"),
         }
     }
 }
@@ -120,11 +121,10 @@ impl Display for RetrievalError {
         match (self.db_error.as_ref(), self.web_error.as_ref()) {
             (Some(db_error), Some(web_error)) => write!(
                 f,
-                "Failed to retrieve from db ({}) and failed to retrieve from web ({})",
-                db_error, web_error
+                "Failed to retrieve from db ({db_error}) and failed to retrieve from web ({web_error})"
             ),
-            (None, Some(web_error)) => write!(f, "Failed to retrieve from web ({})", web_error),
-            (Some(db_error), None) => write!(f, "Failed to retrieve from db ({})", db_error),
+            (None, Some(web_error)) => write!(f, "Failed to retrieve from web ({web_error})"),
+            (Some(db_error), None) => write!(f, "Failed to retrieve from db ({db_error})"),
             (None, None) => write!(f, "Failed to retrieve (undertermined cause)"),
         }
     }
@@ -161,8 +161,8 @@ pub enum DbUpdateError {
 impl Display for DbUpdateError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::RetrieveError(e) => write!(f, "Could not retrieve lectionary for storage: {}", e),
-            Self::InsertError(e) => write!(f, "Could not store retrieved lectionary in database: {}", e),
+            Self::RetrieveError(e) => write!(f, "Could not retrieve lectionary for storage: {e}"),
+            Self::InsertError(e) => write!(f, "Could not store retrieved lectionary in database: {e}"),
         }
     }
 }
@@ -196,10 +196,10 @@ pub enum WebGetError {
 impl Display for WebGetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ClientError(e) => write!(f, "Web client error on GET request: {}", e),
-            Self::ErrorStatus(code) => write!(f, "Error status code on GET request: {}", code),
-            Self::ResponseError(e) => write!(f, "Error reading response: {}", e),
-            Self::ParseError(e) => write!(f, "Error creating lectionary from html: {}", e),
+            Self::ClientError(e) => write!(f, "Web client error on GET request: {e}"),
+            Self::ErrorStatus(code) => write!(f, "Error status code on GET request: {code}"),
+            Self::ResponseError(e) => write!(f, "Error reading response: {e}"),
+            Self::ParseError(e) => write!(f, "Error creating lectionary from html: {e}"),
         }
     }
 }
@@ -207,9 +207,8 @@ impl Display for WebGetError {
 impl Error for WebGetError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::ClientError(e) => Some(e),
+            Self::ClientError(e) | Self::ResponseError(e) => Some(e),
             Self::ErrorStatus(_) => None,
-            Self::ResponseError(e) => Some(e),
             Self::ParseError(e) => Some(e),
         }
     }
@@ -226,9 +225,9 @@ pub enum DatabaseError {
 impl Display for DatabaseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InitError(e) => write!(f, "{}", e),
-            Self::GetError(e) => write!(f, "{}", e),
-            Self::DeleteError(e) => write!(f, "Failed to delete row(s) from the database: {}", e),
+            Self::InitError(e) => write!(f, "{e}"),
+            Self::GetError(e) => write!(f, "{e}"),
+            Self::DeleteError(e) => write!(f, "Failed to delete row(s) from the database: {e}"),
         }
     }
 }
@@ -265,7 +264,7 @@ impl Display for DatabaseGetError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotPresent => write!(f, "Query returned no results"),
-            Self::QueryError(e) => write!(f, "Select Query failed: {}", e),
+            Self::QueryError(e) => write!(f, "Select Query failed: {e}"),
         }
     }
 }
@@ -297,11 +296,11 @@ pub enum DatabaseInitError {
 impl Display for DatabaseInitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::CannotGetUrl(e) => write!(f, "Cannot construct database URL: {}", e),
-            Self::CreateDatabaseError(e) => write!(f, "Cannot create database: {}", e),
-            Self::PoolCreationFailed(e) => write!(f, "Failed to create a connection pool for the database: {}", e),
-            Self::PragmaForeignKeysFailure(e) => write!(f, "Failed to enable foreign keys in the database: {}", e),
-            Self::MigrationError(e) => write!(f, "Failed to run migration scripts for database: {}", e),
+            Self::CannotGetUrl(e) => write!(f, "Cannot construct database URL: {e}"),
+            Self::CreateDatabaseError(e) => write!(f, "Cannot create database: {e}"),
+            Self::PoolCreationFailed(e) => write!(f, "Failed to create a connection pool for the database: {e}"),
+            Self::PragmaForeignKeysFailure(e) => write!(f, "Failed to enable foreign keys in the database: {e}"),
+            Self::MigrationError(e) => write!(f, "Failed to run migration scripts for database: {e}"),
         }
     }
 }
@@ -310,9 +309,7 @@ impl Error for DatabaseInitError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::CannotGetUrl(e) => Some(e),
-            Self::CreateDatabaseError(e) => Some(e),
-            Self::PoolCreationFailed(e) => Some(e),
-            Self::PragmaForeignKeysFailure(e) => Some(e),
+            Self::PoolCreationFailed(e) | Self::PragmaForeignKeysFailure(e) | Self::CreateDatabaseError(e) => Some(e),
             Self::MigrationError(e) => Some(e),
         }
     }
@@ -331,7 +328,7 @@ impl Display for LectionaryHtmlError {
         match self {
             Self::NoContainerFound => write!(f, "No main readings container found"),
             Self::NoDayNameElementFound => write!(f, "No day name element found"),
-            Self::MissingReading(name) => write!(f, "Missing required reading: {}", name),
+            Self::MissingReading(name) => write!(f, "Missing required reading: {name}"),
         }
     }
 }
@@ -356,7 +353,7 @@ impl Display for ReadingHtmlError {
 
 impl Error for ReadingHtmlError {}
 
-/// Error for TryFrom\<String> on ReadingName
+/// Error for `TryFrom<String>` on `ReadingName`
 #[derive(Debug)]
 pub struct ReadingNameFromStringError {
     value: String,
@@ -385,10 +382,10 @@ pub enum ReadConfigError {
 impl fmt::Display for ReadConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::CannotGetPath(e) => write!(f, "Cannot get path to config file: {}", e),
-            Self::NotFound(e) => write!(f, "Missing config file: {}", e),
-            Self::IOError(e) => write!(f, "I/O Error encountered while reading config: {}", e),
-            Self::DeserializationError(e) => write!(f, "Failed to deserialize config file: {}", e),
+            Self::CannotGetPath(e) => write!(f, "Cannot get path to config file: {e}"),
+            Self::NotFound(e) => write!(f, "Missing config file: {e}"),
+            Self::IOError(e) => write!(f, "I/O Error encountered while reading config: {e}"),
+            Self::DeserializationError(e) => write!(f, "Failed to deserialize config file: {e}"),
         }
     }
 }
@@ -396,8 +393,7 @@ impl Error for ReadConfigError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::CannotGetPath(e) => Some(e),
-            Self::NotFound(e) => Some(e),
-            Self::IOError(e) => Some(e),
+            Self::NotFound(e) | Self::IOError(e) => Some(e),
             Self::DeserializationError(e) => Some(e),
         }
     }
@@ -432,17 +428,16 @@ impl fmt::Display for InitConfigError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::AlreadyExists(_) => write!(f, "Config file already exists"),
-            Self::CannotGetPath(e) => write!(f, "Cannot get path for config file: {}", e),
-            Self::IOError(e) => write!(f, "I/O Error encountered while initializing config: {}", e),
+            Self::CannotGetPath(e) => write!(f, "Cannot get path for config file: {e}"),
+            Self::IOError(e) => write!(f, "I/O Error encountered while initializing config: {e}"),
         }
     }
 }
 impl Error for InitConfigError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            Self::AlreadyExists(e) => Some(e),
+            Self::AlreadyExists(e) | Self::IOError(e) => Some(e),
             Self::CannotGetPath(e) => Some(e),
-            Self::IOError(e) => Some(e),
         }
     }
 }
@@ -470,8 +465,8 @@ pub enum PathError {
 impl fmt::Display for PathError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::NoHome(e) => write!(f, "Could not get HOME environment variable: {}", e),
-            Self::PathCreateFailure(e) => write!(f, "Failed to create parent directory: {}", e),
+            Self::NoHome(e) => write!(f, "Could not get HOME environment variable: {e}"),
+            Self::PathCreateFailure(e) => write!(f, "Failed to create parent directory: {e}"),
         }
     }
 }
