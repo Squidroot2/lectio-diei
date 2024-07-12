@@ -4,7 +4,7 @@ use tokio::task::JoinSet;
 
 use crate::args::{CommonArguments, ConfigCommand};
 use crate::client::WebClient;
-use crate::config::Config;
+use crate::config::{Config, DbConfig};
 use crate::display::DisplaySettings;
 use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError, InitConfigError};
 use crate::{
@@ -116,10 +116,22 @@ async fn purge_db() -> Result<(), DatabaseError> {
 /// If all is true, also removes entries that are too far in the future
 async fn clean_db(all: bool) -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
-    let past_entries = Config::from_file_or_default().database.past_entries;
+    let db_config = Config::from_file_or_default().database;
+    let DbConfig {
+        past_entries,
+        future_entries,
+    } = db_config;
     let earliest_date = Local::now() - TimeDelta::days(past_entries as i64);
+
+    let latest_date_id: Option<DateId>;
+    if all {
+        let latest_date = Local::now() + TimeDelta::days(i64::from(future_entries));
+        latest_date_id = Some(DateId::from(&latest_date));
+    } else {
+        latest_date_id = None
+    }
     let count = db
-        .remove_older_than(DateId::from(&earliest_date))
+        .remove_outside_range(DateId::from(&earliest_date), latest_date_id)
         .await
         .map_err(DatabaseError::DeleteError)?;
 

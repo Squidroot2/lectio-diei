@@ -31,12 +31,13 @@ pub enum Command {
         #[command(flatten)]
         readings: DisplayReadingsArgs,
     },
-    /// Manage the database, including retrieving more readings//TODO
+    /// Manage the database, including retrieving more readings
     Db {
         #[command(subcommand)]
         command: DatabaseCommand,
     },
-    /// View and change the config//TODO
+    /// View and change the config
+    //TODO show config, set config settings
     Config {
         #[command(subcommand)]
         command: ConfigCommand,
@@ -75,6 +76,7 @@ pub enum DatabaseCommand {
         #[arg[short, long]]
         all: bool,
     },
+    //TODO refresh, store
 }
 
 #[derive(Subcommand)]
