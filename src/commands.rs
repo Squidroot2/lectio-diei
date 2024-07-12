@@ -52,6 +52,7 @@ pub async fn handle_db_command(subcommand: DatabaseCommand) -> Result<(), Applic
         DatabaseCommand::Show => show_db().await.map_err(ApplicationError::from),
         DatabaseCommand::Purge => purge_db().await.map_err(ApplicationError::from),
         DatabaseCommand::Clean { all } => clean_db(all).await.map_err(ApplicationError::from),
+        DatabaseCommand::Refresh => refresh_db().await.map_err(ApplicationError::from),
     }
 }
 
@@ -124,25 +125,9 @@ async fn purge_db() -> Result<(), DatabaseError> {
 /// If all is true, also removes entries that are too far in the future
 async fn clean_db(all: bool) -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
-    let db_config = Config::from_file_or_default().database;
-    let DbConfig {
-        past_entries,
-        future_entries,
-    } = db_config;
-    let earliest_date = Local::now() - TimeDelta::days(i64::from(past_entries));
-
-    let latest_date_id: Option<DateId> = if all {
-        let latest_date = Local::now() + TimeDelta::days(i64::from(future_entries));
-        Some(DateId::from(&latest_date))
-    } else {
-        None
-    };
-    let count = db
-        .remove_outside_range(DateId::from(&earliest_date), latest_date_id)
-        .await
-        .map_err(DatabaseError::DeleteError)?;
-
-    Ok(println!("{count}"))
+    let config = Config::from_file_or_default();
+    let num_removed = clean_db_inner(&db, config.database, all).await?;
+    Ok(println!("{num_removed}"))
 }
 
 /// Subcommand: db update
@@ -153,29 +138,29 @@ async fn update_db() -> Result<(), DatabaseInitError> {
     let db = DatabaseHandle::new().await?;
     let web_client = WebClient::default();
     let db_config = Config::from_file_or_default().database;
-    let date_ids = DateId::get_list(db_config.past_entries, db_config.future_entries);
+    let num_added = update_db_inner(&db, db_config, &web_client).await;
+    Ok(println!("{num_added}"))
+}
 
-    let mut tasks = JoinSet::new();
-    for id in date_ids {
-        let thread_db = db.clone();
-        let thread_client = web_client.clone();
-        tasks.spawn(async move { orchestration::ensure_stored(id, &thread_db, &thread_client).await });
-    }
-
-    let mut count_added = 0;
-
-    while let Some(thread_result) = tasks.join_next().await {
-        match thread_result {
-            Err(e) => error!("Failed to store a lectionar (Thread panicked!): {}", e),
-            Ok(Err(e)) => error!("Failed to store a lectionary: {}", e),
-            Ok(Ok(new)) => {
-                if new {
-                    count_added += 1;
-                }
-            }
+/// Subcommand: db refresh
+///
+/// Performs a clean, and then an update
+async fn refresh_db() -> Result<(), DatabaseInitError> {
+    let db = DatabaseHandle::new().await?;
+    let db_config = Config::from_file_or_default().database;
+    let num_removed = match clean_db_inner(&db, db_config.clone(), false).await {
+        Ok(num_removed) => num_removed,
+        Err(e) => {
+            error!("Encounterd error removing entries during refresh: {e}");
+            0
         }
-    }
-    Ok(println!("{count_added}"))
+    };
+    let web_client = WebClient::default();
+    let num_added = update_db_inner(&db, db_config, &web_client).await;
+
+    println!("{num_removed}");
+    println!("{num_added}");
+    Ok(())
 }
 
 /// Subcommand: db show
@@ -204,4 +189,52 @@ fn init_config(force: bool) -> Result<(), InitConfigError> {
             Err(e)
         }
     }
+}
+
+/// Used by db clean and db refresh
+async fn clean_db_inner(db: &DatabaseHandle, db_config: DbConfig, all: bool) -> Result<u64, DatabaseError> {
+    let DbConfig {
+        past_entries,
+        future_entries,
+    } = db_config;
+    let earliest_date = Local::now() - TimeDelta::days(i64::from(past_entries));
+
+    let latest_date_id: Option<DateId> = if all {
+        let latest_date = Local::now() + TimeDelta::days(i64::from(future_entries));
+        Some(DateId::from(&latest_date))
+    } else {
+        None
+    };
+    let removed_count = db
+        .remove_outside_range(DateId::from(&earliest_date), latest_date_id)
+        .await
+        .map_err(DatabaseError::DeleteError)?;
+    Ok(removed_count)
+}
+
+/// Used by db udpate and db refresh
+async fn update_db_inner(db: &DatabaseHandle, db_config: DbConfig, web_client: &WebClient) -> u64 {
+    let date_ids = DateId::get_list(db_config.past_entries, db_config.future_entries);
+
+    let mut tasks = JoinSet::new();
+    for id in date_ids {
+        let thread_db = db.clone();
+        let thread_client = web_client.clone();
+        tasks.spawn(async move { orchestration::ensure_stored(id, &thread_db, &thread_client).await });
+    }
+
+    let mut count_added = 0;
+
+    while let Some(thread_result) = tasks.join_next().await {
+        match thread_result {
+            Err(e) => error!("Failed to store a lectionar (Thread panicked!): {}", e),
+            Ok(Err(e)) => error!("Failed to store a lectionary: {}", e),
+            Ok(Ok(new)) => {
+                if new {
+                    count_added += 1;
+                }
+            }
+        }
+    }
+    count_added
 }

@@ -76,7 +76,9 @@ pub enum DatabaseCommand {
         #[arg[short, long]]
         all: bool,
     },
-    //TODO refresh, store
+    /// Equivalent of db clean + db update
+    Refresh,
+    //TODO store
 }
 
 #[derive(Subcommand, Copy, Clone)]

@@ -132,7 +132,7 @@ impl Config {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct DbConfig {
     pub future_entries: u32,
     pub past_entries: u32,
