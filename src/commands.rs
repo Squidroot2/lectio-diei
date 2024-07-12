@@ -123,13 +123,12 @@ async fn clean_db(all: bool) -> Result<(), DatabaseError> {
     } = db_config;
     let earliest_date = Local::now() - TimeDelta::days(past_entries as i64);
 
-    let latest_date_id: Option<DateId>;
-    if all {
+    let latest_date_id: Option<DateId> = if all {
         let latest_date = Local::now() + TimeDelta::days(i64::from(future_entries));
-        latest_date_id = Some(DateId::from(&latest_date));
+         Some(DateId::from(&latest_date))
     } else {
-        latest_date_id = None
-    }
+        None
+    };
     let count = db
         .remove_outside_range(DateId::from(&earliest_date), latest_date_id)
         .await

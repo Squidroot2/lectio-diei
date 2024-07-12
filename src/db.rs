@@ -112,7 +112,7 @@ impl DatabaseHandle {
         //TODO remove new ones too
         let ids_outside_range = all_ids
             .into_iter()
-            .filter(|id| id < &earliest || maybe_latest.as_ref().is_some_and(|latest| id > &latest));
+            .filter(|id| *id < earliest || maybe_latest.as_ref().is_some_and(|latest| *id > *latest));
         let mut count_removed = 0;
         for id in ids_outside_range {
             if let Err(e) = self.remove_lectionary(&id).await {
@@ -230,7 +230,7 @@ pub struct LectionaryRow {
 
 impl PartialOrd for LectionaryRow {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(&other))
+        Some(self.cmp(other))
     }
 }
 

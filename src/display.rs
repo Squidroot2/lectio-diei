@@ -95,20 +95,20 @@ impl Lectionary {
     }
 
     fn print_reading_one(&self, seperator: &str) {
-        self.get_reading_1().pretty_print(ReadingName::Reading1.as_str(), &seperator, false);
+        self.get_reading_1().pretty_print(ReadingName::Reading1.as_str(), seperator, false);
     }
 
     fn print_resp_psalm(&self, seperator: &str) {
-        self.get_resp_psalm().pretty_print(ReadingName::Psalm.as_str(), &seperator, true);
+        self.get_resp_psalm().pretty_print(ReadingName::Psalm.as_str(), seperator, true);
     }
 
     fn print_reading_two(&self, seperator: &str) {
         self.get_reading_2()
-            .inspect(|reading_2| reading_2.pretty_print(ReadingName::Reading2.as_str(), &seperator, false));
+            .inspect(|reading_2| reading_2.pretty_print(ReadingName::Reading2.as_str(), seperator, false));
     }
 
     fn print_gospel(&self, seperator: &str) {
-        self.get_gospel().pretty_print(ReadingName::Gospel.as_str(), &seperator, false);
+        self.get_gospel().pretty_print(ReadingName::Gospel.as_str(), seperator, false);
     }
 }
 
