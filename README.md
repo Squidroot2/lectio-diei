@@ -1,5 +1,7 @@
 # Lectio Diei
 
+![Command Example](docs/images/Example_v0.1.png)
+
 CLI application for retrieving, storing, and displaying the daily Catholic readings. Retrieved from the [United States Conference of Catholic Bishops site](https://bible.usccb.org/). After being retrieved, the readings are stored in a local sqlite database. This way, they can be displayed on-demand with low latency.
 
 While the core functionality is present, this is still pre-release software. Command line interface is subject to change.
@@ -25,13 +27,13 @@ For now, the only way to install is to build from source. This is fairly easy to
     ```
 After the install command completes, the lectio-diei binary will then be installed at ~/.cargo/bin. Since this is in your PATH, you should be able to execute the application with:
 ```bash
-    lectio-diei display
+lectio-diei display
 ```
 
 ## Usage
 
 The most basic usage involves two commands:
-- ```lectio-diei db refresh``` - updates your database with readings, deleting old readings
+- ```lectio-diei db refresh``` - Updates your database with readings, deleting old readings
 - ```lectio-diei display``` - Displays the readings for today
 
 More options can be seen by simply running ```lectio-diei```
