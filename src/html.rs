@@ -12,10 +12,13 @@ pub fn element_to_plain_text(element: &ElementRef) -> String {
             Node::Text(text) => {
                 plain_text.push_str(text.trim_matches('\n'));
             }
-            // reason: More html attributes may have special handling later
-            #[allow(clippy::single_match_else)]
             Node::Element(element) => match element.name() {
                 "br" => plain_text.push('\n'),
+                "p" => {
+                    plain_text.push('\n');
+                    let elmt_ref = ElementRef::wrap(node).expect("Node of value Element will always wrap to ElementRef");
+                    plain_text.push_str(&element_to_plain_text(&elmt_ref));
+                }
                 _ => {
                     let elmt_ref = ElementRef::wrap(node).expect("Node of value Element will always wrap to ElementRef");
                     plain_text.push_str(&element_to_plain_text(&elmt_ref));
