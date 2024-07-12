@@ -1,10 +1,13 @@
 [package]
 name = "lectio-diei"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 description = "CLI application for displaying the daily Catholic readings"
 repository = "https://github.com/Squidroot2/lectio-diei"
 license = "MIT"
+keywords = ["bible", "christian", "catholic", "cli"]
+categories = ["command-line-utilities"]
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -30,8 +33,12 @@ toml = "0.8.14"
 toml_edit = "0.22.15"
 
 [lints.clippy]
+cargo = {level = "warn", priority = -1 }
 pedantic = {level = "warn", priority = -1}
 
 # These lints limit naming conventions in ways I don't like
 module_name_repetitions = "allow"
 struct_field_names = "allow"
+
+# Nothing can be done here
+multiple_crate_versions = "allow"
