@@ -1,9 +1,56 @@
 # Lectio Diei
 
-CLI application for displaying the daily Catholic readings. Retrieved from the [United States Conference of Catholic Bishops site](https://bible.usccb.org/). After being retrieved, the readings are stored in a local sqlite database.
+CLI application for retrieving, storing, and displaying the daily Catholic readings. Retrieved from the [United States Conference of Catholic Bishops site](https://bible.usccb.org/). After being retrieved, the readings are stored in a local sqlite database. This way, they can be displayed on-demand with low latency.
 
-Very much a work in progress, but is currently functional.
+While the core functionality is present, this is still pre-release software. Command line interface is subject to change.
 
+## Compatibility
+For now, only Linux is supported. The current issue is that the paths for the database, log, and config file follows the [XDG specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) which MacOS and Windows do not follow. I do have plans to address this.
+
+## Installation
+For now, the only way to install is to build from source. This is fairly easy to do with cargo even if you have never compiled software before
+
+1. Install the [Rust toolchain](https://www.rust-lang.org/tools/install)
+0. Add ~/.cargo/bin to your PATH environment variable
+0. Install [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) if you haven't already
+0. With `git` installed, clone the repository:
+
+    ```bash
+    git clone https://github.com/Squidroot2/lectio-diei
+    ```
+
+0. Install with `cargo`
+    ```bash
+    cargo install --path lectio-diei/
+    ```
+After the install command completes, the lectio-diei binary will then be installed at ~/.cargo/bin. Since this is in your PATH, you should be able to execute the application with:
+```bash
+    lectio-diei display
+```
+
+## Usage
+
+The most basic usage involves two commands:
+- ```lectio-diei db refresh``` - updates your database with readings, deleting old readings
+- ```lectio-diei display``` - Displays the readings for today
+
+More options can be seen by simply running ```lectio-diei```
+
+## Configuration
+After running any valid command at least once, you should have a config file at ~/.config/lectio-diei/config.toml. Edit this file to change number of entries stored, or default display options.
+
+## Plans for 1.0
+- [ ] Colors and formatting options for the Readings
+- [ ] Adding the Alleluia as an option
+- [ ] Show and change config options from commandline
+- [ ] Windows support (maybe others?)
+- [ ] Store single day without displaying
+- [ ] No database mode
+- [ ] Database-only mode (Don't retrieve from web if you don't already have it)
+- [ ] Additional logging options
+- [ ] Formalized and documented error codes
+
+And maybe more...
 ## License
 
 Licensed under the MIT license [LICENSE](LICENSE)
