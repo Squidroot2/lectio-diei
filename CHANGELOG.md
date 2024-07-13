@@ -5,7 +5,7 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
-- Update dependencies (7/13/24)
+- Updated dependencies (7/13/24)
 
 ## [0.1.1] - 2024-07-13
 - XDG environment variables (XDG_CONFIG_HOME, XDG_DATA_HOME, XDG_STATE_HOME) are now respected
