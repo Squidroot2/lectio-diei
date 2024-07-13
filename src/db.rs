@@ -183,7 +183,7 @@ impl DatabaseHandle {
     /// Initializes a connection to the Sqlite database after ensuring it exists
     async fn init_db(db_url: &str) -> Result<SqlitePool, DatabaseInitError> {
         if !Sqlite::database_exists(db_url).await.unwrap_or(false) {
-            info!("Creating new database at {}", &db_url);
+            warn!("Creating new database at '{}' (You should only see this once)", &db_url);
             Sqlite::create_database(db_url)
                 .await
                 .map_err(DatabaseInitError::CreateDatabaseError)?;
