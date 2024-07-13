@@ -1,0 +1,42 @@
+name: Create Draft Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'RELEASE ')
+
+    steps:
+      - name: Create draft release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commitMessage = github.event.head_commit.message;
+            const versionPattern = /RELEASE\s(v[0-9]+\.[0-9]+\.[0-9]+)/;
+            const match = commitMessage.match(versionPattern);
+
+            if (!match) {
+              throw new Error('No version found in commit message');
+            }
+
+            const version = match[1];
+
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: version,
+              name: `Release ${version}`,
+              body: `This is a draft release created by GitHub Actions for version ${version}.`,
+              draft: true,
+            });
+
+            console.log(`Draft release created: ${release.html_url}`);
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
