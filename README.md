@@ -20,7 +20,7 @@ For now, only Linux is supported. The current issue is that the paths for the da
 
 ### Install with Cargo
 ```bash
-cargo install lectio-diei
+cargo install lectio-diei --locked
 ```
 After the install command completes, the lectio-diei binary will then be installed at ~/.cargo/bin. Since this is in your PATH, you should be able to execute the application with:
 ```bash
