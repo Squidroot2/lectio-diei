@@ -11,7 +11,7 @@ permissions:
 jobs:
   create_release:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, 'RELEASE ')
+    if: contains(github.event.head_commit.message, 'RELEASE v')
 
     steps:
       - name: Create draft release
@@ -19,7 +19,7 @@ jobs:
         with:
           script: |
             const commitMessage = github.event.head_commit.message;
-            const versionPattern = /RELEASE\s(v[0-9]+\.[0-9]+\.[0-9]+)/;
+            const versionPattern = /RELEASE (v[0-9]+\.[0-9]+\.[0-9]+)/;
             const match = commitMessage.match(versionPattern);
 
             if (!match) {
@@ -32,8 +32,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: version,
-              name: `Release ${version}`,
-              body: `This is a draft release created by GitHub Actions for version ${version}.`,
+              generate_release_notes: true,
               draft: true,
             });
 
