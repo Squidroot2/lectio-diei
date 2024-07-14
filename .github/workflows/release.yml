@@ -11,15 +11,15 @@ permissions:
 jobs:
   create_release:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, 'RELEASE v')
+    if: contains(github.event.head_commit.message, 'Release v')
 
     steps:
       - name: Create draft release
         uses: actions/github-script@v7
         with:
-          script: |
-            const commitMessage = github.event.head_commit.message;
-            const versionPattern = /RELEASE (v[0-9]+\.[0-9]+\.[0-9]+)/;
+         script: |
+            const commitMessage = context.payload.head_commit.message;
+            const versionPattern = /Release (v[0-9]+\.[0-9]+\.[0-9]+)/;
             const match = commitMessage.match(versionPattern);
 
             if (!match) {
