@@ -19,7 +19,7 @@ jobs:
         with:
          script: |
             const commitMessage = context.payload.head_commit.message;
-            const versionPattern = /RELEASE (v[0-9]+\.[0-9]+\.[0-9]+)/;
+            const versionPattern = /Release (v[0-9]+\.[0-9]+\.[0-9]+)/;
             const match = commitMessage.match(versionPattern);
 
             if (!match) {
