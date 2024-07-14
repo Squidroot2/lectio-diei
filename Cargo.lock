@@ -962,7 +962,6 @@ dependencies = [
  "chrono",
  "clap",
  "log",
- "once_cell",
  "reqwest",
  "scraper",
  "serde",
