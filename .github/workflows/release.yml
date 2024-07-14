@@ -3,7 +3,7 @@ name: Create Draft Release
 on:
   push:
     branches:
-      - fix-release-job
+      - main
 
 permissions:
   contents: write
