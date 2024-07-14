@@ -1,5 +1,8 @@
 use std::borrow::Cow;
 
+use log::*;
+use regex::Regex;
+
 use crate::{
     args::{CommonArguments, DisplayReadingsArgs, ReadingArg},
     config::Config,
@@ -100,7 +103,7 @@ impl Lectionary {
     }
 
     fn print_resp_psalm(&self, seperator: &str) {
-        self.get_resp_psalm().pretty_print(ReadingName::Psalm.as_str(), seperator, true);
+        self.get_resp_psalm().pretty_print_psalm(ReadingName::Psalm.as_str(), seperator);
     }
 
     fn print_reading_two(&self, seperator: &str) {
@@ -114,15 +117,57 @@ impl Lectionary {
 }
 
 impl Reading {
-    pub fn pretty_print(&self, heading: &str, seperator: &str, preserve_newlines: bool) {
+    /// prints the reading
+    ///
+    /// seperator is the line seperating the heading from the text
+    fn pretty_print(&self, heading: &str, seperator: &str, preserve_newlines: bool) {
         let text: Cow<'_, str> = if preserve_newlines {
             Cow::Borrowed(self.get_text())
         } else {
             Cow::Owned(self.get_text().replace('\n', " "))
         };
-        println!("{heading} ({})", self.get_location());
+        self.print_heading(heading);
         println!("{seperator}");
         println!("{text}");
         println!("{seperator}");
+    }
+
+    /// Should only be used for Psalms
+    fn pretty_print_psalm(&self, heading: &str, seperator: &str) {
+        self.print_heading(heading);
+        println!("{seperator}");
+        let mut lines = self.get_text().lines();
+        if let Some(first_line) = lines.next() {
+            println!("{}", Self::format_psalm_first_line(first_line));
+            for line in lines {
+                println!("{line}");
+            }
+        } else {
+            error!("Can't format the psalm: it has no content");
+        }
+        println!("{seperator}");
+    }
+
+    fn print_heading(&self, heading: &str) {
+        println!("{heading} ({})", self.get_location());
+    }
+
+    fn format_psalm_first_line(first_line: &str) -> String {
+        let pattern = Regex::new(r"\([0-9]\)\s+").expect("Should be valid regex");
+        let mut out = String::new();
+        for part in pattern.splitn(first_line, 2) {
+            out += part;
+        }
+        out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn psalm_heading_formatted() {
+        assert_eq!("R. Test Line", Reading::format_psalm_first_line("R. (8)   Test Line"));
     }
 }
