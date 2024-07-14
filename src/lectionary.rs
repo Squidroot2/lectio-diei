@@ -1,7 +1,7 @@
 use std::fmt::{self, Display, Formatter};
+use std::sync::OnceLock;
 
 use log::*;
-use once_cell::sync::Lazy;
 use scraper::element_ref::ElementRef;
 use scraper::selectable::Selectable;
 use scraper::selector::Selector;
@@ -13,11 +13,35 @@ use crate::error::{LectionaryHtmlError, ReadingHtmlError, ReadingNameFromStringE
 use crate::html;
 
 /// Main container in which all other relevant elements are found
-static CONTAINER_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("#block-usccb-readings-content div.page-container").unwrap());
+fn container_selector() -> &'static Selector {
+    static CONTAINER_SELECTOR: OnceLock<Selector> = OnceLock::new();
+    CONTAINER_SELECTOR.get_or_init(|| Selector::parse("#block-usccb-readings-content div.page-container").unwrap())
+}
 /// Use within element found by `CONTAINER_SELECTOR`. Finds the element that has the name of the day (e.g. Fourteenth Sunday in Ordinary Time )
-static DAY_NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.b-lectionary div.innerblock :first-child").unwrap());
+fn day_name_selector() -> &'static Selector {
+    static DAY_NAME_SELECTOR: OnceLock<Selector> = OnceLock::new();
+    DAY_NAME_SELECTOR.get_or_init(|| Selector::parse("div.b-lectionary div.innerblock :first-child").unwrap())
+}
 /// Use within element found by `CONTAINER_SELECTOR`. Finds all the verse(aka reading) containers
-static READINGS_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.b-verse").unwrap());
+fn readings_selector() -> &'static Selector {
+    static READINGS_SELECTOR: OnceLock<Selector> = OnceLock::new();
+    READINGS_SELECTOR.get_or_init(|| Selector::parse("div.b-verse").unwrap())
+}
+/// Use within a element found by `READINGS_SELECTOR`
+fn reading_name_selector() -> &'static Selector {
+    static READING_NAME_SELECTOR: OnceLock<Selector> = OnceLock::new();
+    READING_NAME_SELECTOR.get_or_init(|| Selector::parse(".name").unwrap())
+}
+/// Use within element found by `READINGS_SELECTOR`. The container with the actual text of the reading.
+fn reading_content_selector() -> &'static Selector {
+    static READING_CONTENT_SELECTOR: OnceLock<Selector> = OnceLock::new();
+    READING_CONTENT_SELECTOR.get_or_init(|| Selector::parse("div.content-body").unwrap())
+}
+/// Use within element found by `READINGS_SELECTOR`. Finds the address (book, chapter, verse(s)) of the reading
+fn reading_location_selector() -> &'static Selector {
+    static READING_LOCATION_SELECTOR: OnceLock<Selector> = OnceLock::new();
+    READING_LOCATION_SELECTOR.get_or_init(|| Selector::parse("div.content-header div.address a").unwrap())
+}
 
 #[derive(Debug)]
 pub struct Lectionary {
@@ -32,11 +56,11 @@ pub struct Lectionary {
 impl Lectionary {
     pub fn create_from_html(id: DateId, document: &Html) -> Result<Self, LectionaryHtmlError> {
         let container = document
-            .select(&CONTAINER_SELECTOR)
+            .select(container_selector())
             .next()
             .ok_or(LectionaryHtmlError::NoContainerFound)?;
         let day_name_elmnt = container
-            .select(&DAY_NAME_SELECTOR)
+            .select(day_name_selector())
             .next()
             .ok_or(LectionaryHtmlError::NoDayNameElementFound)?;
         let day_name = day_name_elmnt.inner_html().trim().to_owned();
@@ -91,9 +115,6 @@ impl From<LectionaryDbEntity> for Lectionary {
     }
 }
 
-/// Use within a element found by `READINGS_SELECTOR`
-static READING_NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse(".name").unwrap());
-
 /// For temporary use while constructing a `Lectionary` from html
 #[derive(Default)]
 struct ParsedReadings {
@@ -107,9 +128,9 @@ impl ParsedReadings {
     fn extract_from_container(container: ElementRef<'_>) -> Self {
         let mut out = ParsedReadings::default();
 
-        let readings = container.select(&READINGS_SELECTOR);
+        let readings = container.select(readings_selector());
         for reading_elmt in readings {
-            if let Some(name_elmnt) = reading_elmt.select(&READING_NAME_SELECTOR).next() {
+            if let Some(name_elmnt) = reading_elmt.select(reading_name_selector()).next() {
                 match ReadingName::try_from(html::replace_entities(name_elmnt.inner_html())) {
                     Ok(name) => match Reading::from_container(reading_elmt) {
                         Ok(reading) => match name {
@@ -179,12 +200,6 @@ impl TryFrom<String> for ReadingName {
     }
 }
 
-/// Use within element found by `READINGS_SELECTOR`. The container with the actual text of the reading.
-static READING_CONTENT_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.content-body").unwrap());
-
-/// Use within element found by `READINGS_SELECTOR`. Finds the address (book, chapter, verse(s)) of the reading
-static READING_LOCATION_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.content-header div.address a").unwrap());
-
 #[derive(Debug)]
 pub struct Reading {
     location: String,
@@ -201,12 +216,12 @@ impl Reading {
 
     fn from_container(reading_container: ElementRef<'_>) -> Result<Self, ReadingHtmlError> {
         let location_elmt = reading_container
-            .select(&READING_LOCATION_SELECTOR)
+            .select(reading_location_selector())
             .next()
             .ok_or(ReadingHtmlError::MissingLocation)?;
         let location = html::replace_entities(location_elmt.inner_html());
         let content = reading_container
-            .select(&READING_CONTENT_SELECTOR)
+            .select(reading_content_selector())
             .next()
             .ok_or(ReadingHtmlError::MissingContent)?;
         let text = html::element_to_plain_text(&content);
@@ -220,5 +235,25 @@ impl From<ReadingRow> for Reading {
             location: row.location,
             text: row.content,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{fs::File, io::Read, path::PathBuf, str::FromStr};
+
+    #[test]
+    fn derialize_sunday_lectionary() {
+        let mut html_string = String::new();
+        File::open(PathBuf::from_str("tests/resources/sunday_or.html").unwrap())
+            .unwrap()
+            .read_to_string(&mut html_string)
+            .unwrap();
+
+        let html_doc = Html::parse_document(&html_string);
+        let lectionary = Lectionary::create_from_html(DateId::today(), &html_doc).unwrap();
+        assert_eq!(DateId::today(), lectionary.id);
+        assert!(lectionary.reading_2.is_some());
     }
 }

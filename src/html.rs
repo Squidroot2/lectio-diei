@@ -1,6 +1,6 @@
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
-use once_cell::sync::Lazy;
 use scraper::ElementRef;
 use scraper::Node;
 
@@ -32,21 +32,24 @@ pub fn element_to_plain_text(element: &ElementRef) -> String {
 }
 
 /// `HashMap` of expected html entities with their replacement character
-static HTML_ENTITIES: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
-    let mut map = HashMap::new();
-    map.insert("&nbsp;", " ");
-    map.insert("&amp;", "&");
-    map.insert("&lt;", "<");
-    map.insert("&gt;", ">");
-    map.insert("&quot;", "\"");
-    map.insert("&#39;", "'");
-    map.insert("&apos;", "'");
-    map
-});
+fn html_entites() -> &'static HashMap<&'static str, &'static str> {
+    static HTML_ENTITIES: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
+    HTML_ENTITIES.get_or_init(|| {
+        let mut map = HashMap::new();
+        map.insert("&nbsp;", " ");
+        map.insert("&amp;", "&");
+        map.insert("&lt;", "<");
+        map.insert("&gt;", ">");
+        map.insert("&quot;", "\"");
+        map.insert("&#39;", "'");
+        map.insert("&apos;", "'");
+        map
+    })
+}
 
 /// Use when getting the inner text of an html element
 pub fn replace_entities(mut value: String) -> String {
-    for (entity, target) in HTML_ENTITIES.iter() {
+    for (entity, target) in html_entites() {
         if value.contains(entity) {
             value = value.replace(entity, target);
         }
