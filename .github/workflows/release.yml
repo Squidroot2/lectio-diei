@@ -18,22 +18,15 @@ jobs:
         uses: actions/github-script@v7
         with:
          script: |
-            console.log(JSON.stringify(context, null, 4));
-            const commits = github.event.payload.commits || [];
-            const versionPattern = /Release (v[0-9]+\.[0-9]+\.[0-9]+)/;
-            let version = null;
+            const commitMessage = context.payload.head_commit.message;
+            const versionPattern = /RELEASE (v[0-9]+\.[0-9]+\.[0-9]+)/;
+            const match = commitMessage.match(versionPattern);
 
-            for (const commit of commits) {
-              const match = commit.message.match(versionPattern);
-              if (match) {
-                version = match[1];
-                break;
-              }
+            if (!match) {
+              throw new Error('No version found in commit message');
             }
 
-            if (!version) {
-              throw new Error('No version found in any commit message');
-            }
+            const version = match[1];
 
             const { data: release } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
