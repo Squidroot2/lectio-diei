@@ -1,4 +1,4 @@
-# Lectio Diei [![Crates.io](https://img.shields.io/crates/v/lectio-diei.svg)](https://crates.io/crates/lectio-diei) [![dependency status](https://deps.rs/repo/github/Squidroot2/lectio-diei/status.svg)](https://deps.rs/repo/github/Squidroot2/lectio-diei)
+# Lectio Diei [![Crates.io](https://img.shields.io/crates/v/lectio-diei.svg)](https://crates.io/crates/lectio-diei) [![Build Status](https://github.com/Squidroot2/lectio-diei/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Squidroot2/lectio-diei/actions) [![dependency status](https://deps.rs/repo/github/Squidroot2/lectio-diei/status.svg)](https://deps.rs/repo/github/Squidroot2/lectio-diei)
 
 CLI application for retrieving, storing, and displaying the daily Catholic readings. Retrieved from the [United States Conference of Catholic Bishops site](https://bible.usccb.org/). After being retrieved, the readings are stored in a local sqlite database. This way, they can be displayed on-demand with low latency.
 
