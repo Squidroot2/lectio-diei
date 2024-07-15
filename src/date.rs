@@ -28,7 +28,7 @@ impl DateId {
 
     /// Gets the `DateId` for today, local time
     pub fn today() -> Self {
-        Self::from(&Local::now())
+        Self::from_local_datetime(&Local::now())
     }
 
     /// Checks that a given `str` is a valid `DateId` before returning it
@@ -36,7 +36,7 @@ impl DateId {
     /// First converts to a `NaiveDate`, then  back to a `String` for storage within `DateId` struct
     pub fn checked_from_str(date_string: &str) -> Result<Self, ParseError> {
         let date = NaiveDate::parse_from_str(date_string, DATE_ID_FORMAT)?;
-        Ok(Self::from(&date))
+        Ok(Self::from_date(date))
     }
 
     /// Gets a list of `DateId`s for a range
@@ -48,29 +48,27 @@ impl DateId {
         let today = Local::now();
         for delta in (0 - i64::from(past_days))..i64::from(future_days) {
             let date = today + TimeDelta::days(delta);
-            list.push(DateId::from(&date));
+            list.push(DateId::from_local_datetime(&date));
         }
         list
+    }
+
+    /// Returns a `DateId` for given local `DateTime`
+    pub fn from_local_datetime(date: &DateTime<Local>) -> Self {
+        let id = date.format(DATE_ID_FORMAT).to_string();
+        Self { id }
+    }
+
+    /// Returns as `DateId` for given `NaiveDate`
+    fn from_date(date: NaiveDate) -> Self {
+        let id = date.format(DATE_ID_FORMAT).to_string();
+        Self { id }
     }
 }
 
 impl Display for DateId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
-    }
-}
-
-impl From<&DateTime<Local>> for DateId {
-    fn from(date: &DateTime<Local>) -> Self {
-        let id = date.format(DATE_ID_FORMAT).to_string();
-        Self { id }
-    }
-}
-
-impl From<&NaiveDate> for DateId {
-    fn from(date: &NaiveDate) -> Self {
-        let id = date.format(DATE_ID_FORMAT).to_string();
-        Self { id }
     }
 }
 
@@ -115,7 +113,7 @@ mod tests {
     #[test]
     fn get_date_string_correct() {
         let date = Local.with_ymd_and_hms(2024, 7, 14, 0, 0, 0).unwrap();
-        let date_id = DateId::from(&date);
+        let date_id = DateId::from_local_datetime(&date);
         assert_eq!(date_id.as_str(), "071424");
     }
 

@@ -201,12 +201,12 @@ async fn clean_db_inner(db: &DatabaseHandle, db_config: DbConfig, all: bool) -> 
 
     let latest_date_id: Option<DateId> = if all {
         let latest_date = Local::now() + TimeDelta::days(i64::from(future_entries));
-        Some(DateId::from(&latest_date))
+        Some(DateId::from_local_datetime(&latest_date))
     } else {
         None
     };
     let removed_count = db
-        .remove_outside_range(DateId::from(&earliest_date), latest_date_id)
+        .remove_outside_range(DateId::from_local_datetime(&earliest_date), latest_date_id)
         .await
         .map_err(DatabaseError::DeleteError)?;
     Ok(removed_count)
