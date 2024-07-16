@@ -94,7 +94,7 @@ pub enum ConfigCommand {
     },
 }
 
-#[derive(Args)]
+#[derive(Args, Copy, Clone)]
 #[group(required = false, multiple = false)]
 pub struct FormattingArgs {
     /// Format the lines so that each has a given maximum length

@@ -87,8 +87,8 @@ impl DisplaySettings {
 const ALL_READINGS: [ReadingArg; 4] = [ReadingArg::Reading1, ReadingArg::Reading2, ReadingArg::Psalm, ReadingArg::Gospel];
 
 impl Lectionary {
-    /// Displays the lectionary with the given DisplaySettings
-    pub fn pretty_print(&self, settings: DisplaySettings) {
+    /// Displays the lectionary with the given `DisplaySettings`
+    pub fn pretty_print(&self, settings: &DisplaySettings) {
         let list = match &settings.readings_to_display {
             ReadingsOptions::All => ALL_READINGS.as_slice(),
             ReadingsOptions::DayOnly => &[],
@@ -100,17 +100,17 @@ impl Lectionary {
             match reading {
                 ReadingArg::Reading1 => {
                     self.get_reading_1()
-                        .pretty_print_as_reading(ReadingName::Reading1.as_str(), &dashes, settings.line_breaks)
+                        .pretty_print_as_reading(ReadingName::Reading1.as_str(), &dashes, settings.line_breaks);
                 }
                 ReadingArg::Reading2 => {
                     let _ = self.get_reading_2().inspect(|reading_2| {
-                        reading_2.pretty_print_as_reading(ReadingName::Reading2.as_str(), &dashes, settings.line_breaks)
+                        reading_2.pretty_print_as_reading(ReadingName::Reading2.as_str(), &dashes, settings.line_breaks);
                     });
                 }
                 ReadingArg::Psalm => self.get_resp_psalm().pretty_print_as_psalm(ReadingName::Psalm.as_str(), &dashes),
                 ReadingArg::Gospel => {
                     self.get_gospel()
-                        .pretty_print_as_reading(ReadingName::Gospel.as_str(), &dashes, settings.line_breaks)
+                        .pretty_print_as_reading(ReadingName::Gospel.as_str(), &dashes, settings.line_breaks);
                 }
             }
         }
