@@ -169,7 +169,7 @@ impl Reading {
 
     /// Removes the verse number from the first line of the psalm
     fn format_psalm_first_line(first_line: &str) -> String {
-        let pattern = Regex::new(r"\([0-9]\)\s+").expect("Should be valid regex");
+        let pattern = Regex::new(r"\(.+\)\s+").expect("Should be valid regex");
         let mut out = String::new();
         for part in pattern.splitn(first_line, 2) {
             out += part;
