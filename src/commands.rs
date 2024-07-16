@@ -2,7 +2,7 @@ use chrono::{Local, TimeDelta};
 use log::*;
 use tokio::task::JoinSet;
 
-use crate::args::{CommonArguments, ConfigCommand};
+use crate::args::{CommonArguments, ConfigCommand, FormattingArgs};
 use crate::client::WebClient;
 use crate::config::{Config, DbConfig};
 use crate::display::DisplaySettings;
@@ -22,6 +22,7 @@ use crate::{
 pub async fn display(
     maybe_date_string: Option<String>,
     readings: DisplayReadingsArgs,
+    formatting: FormattingArgs,
     args: CommonArguments,
 ) -> Result<(), ApplicationError> {
     let date_id = if let Some(date_string) = maybe_date_string {
@@ -33,7 +34,7 @@ pub async fn display(
     };
 
     let config = Config::from_file_or_default();
-    let settings = DisplaySettings::from_config_and_args(config, readings, args);
+    let settings = DisplaySettings::from_config_and_args(config, readings, formatting, args);
 
     orchestration::retrieve_and_display(date_id, settings)
         .await
