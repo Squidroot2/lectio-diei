@@ -37,7 +37,10 @@ More options can be seen by simply running ```lectio-diei```
 After running any valid command at least once, you should have a config file at ~/.config/lectio-diei/config.toml. Edit this file to change number of entries stored, or default display options.
 
 ## Plans for 1.0
-- [ ] Colors and formatting options for the Readings
+- [x] Colors and formatting options for the Readings
+    - [x] Configurable line wrapping
+    - [ ] Configurable colors for each reading
+    - [ ] Improved heading formatting
 - [ ] Adding the Alleluia as an option
 - [ ] Show and change config options from commandline
 - [ ] Windows support (maybe others?)

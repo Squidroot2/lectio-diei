@@ -30,6 +30,9 @@ pub enum Command {
 
         #[command(flatten)]
         readings: DisplayReadingsArgs,
+
+        #[command(flatten)]
+        formatting: FormattingArgs,
     },
     /// Manage the database, including retrieving more readings
     Db {
@@ -89,6 +92,18 @@ pub enum ConfigCommand {
         #[arg(short, long)]
         force: bool,
     },
+}
+
+#[derive(Args, Copy, Clone)]
+#[group(required = false, multiple = false)]
+pub struct FormattingArgs {
+    /// Format the lines so that each has a given maximum length
+    #[arg(short = 'w', long)]
+    pub max_width: Option<u16>,
+
+    /// Use the original line breaks
+    #[arg(short, long)]
+    pub original_linebreaks: bool,
 }
 
 #[derive(Args)]

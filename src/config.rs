@@ -103,6 +103,19 @@ impl Config {
 
         Self::set_key_comment(
             &mut doc,
+            "display",
+            "original_linebreaks",
+            "Whether to use original linebreaks as displayed on USCCB site. If true, max_width is ignored. Note: Resp. Psalm always uses original line breaks",
+        );
+
+        Self::set_key_comment(
+            &mut doc,
+            "display" ,
+            "max_width" ,
+            "Maximum width for formatting readings. Ignored if original_linebreaks is true. Not used for Psalm. Set to 0 for no line breaks" );
+
+        Self::set_key_comment(
+            &mut doc,
             "database",
             "future_entries",
             "Number of days in to the future to try to keep in the database. Includes today (i.e. a value of 1 will only store today's readings)",
@@ -150,12 +163,24 @@ impl Default for DbConfig {
 #[derive(Serialize, Deserialize)]
 pub struct DisplayConfig {
     pub reading_order: Vec<ReadingArg>,
+    #[serde(default)]
+    pub original_linebreaks: bool,
+    #[serde(default = "DisplayConfig::default_width")]
+    pub max_width: u16,
+}
+
+impl DisplayConfig {
+    fn default_width() -> u16 {
+        140
+    }
 }
 
 impl Default for DisplayConfig {
     fn default() -> Self {
         Self {
             reading_order: vec![ReadingArg::Reading1, ReadingArg::Reading2, ReadingArg::Gospel],
+            original_linebreaks: bool::default(),
+            max_width: Self::default_width(),
         }
     }
 }

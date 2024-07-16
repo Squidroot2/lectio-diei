@@ -10,7 +10,7 @@ use crate::lectionary::Lectionary;
 /// Retrieves lectionary from db and web and attempts to store it before printing to STDOUT
 pub async fn retrieve_and_display(date_id: DateId, settings: DisplaySettings) -> Result<(), RetrievalError> {
     let lectionary = retrieve_lectionary(date_id).await?;
-    lectionary.pretty_print(settings);
+    lectionary.pretty_print(&settings);
     Ok(())
 }
 

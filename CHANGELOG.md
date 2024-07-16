@@ -5,6 +5,7 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+- Added formatting options (config and args) to preserve original new lines OR use custom width
 
 ## [0.1.2] - 2024-7-14
 - Updated dependencies (7/13/24)

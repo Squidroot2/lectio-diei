@@ -25,7 +25,11 @@ async fn run() -> Result<(), ApplicationError> {
     });
 
     match args.command {
-        Command::Display { date, readings } => commands::display(date, readings, args.common_args).await,
+        Command::Display {
+            date,
+            readings,
+            formatting,
+        } => commands::display(date, readings, formatting, args.common_args).await,
         Command::Db { command } => commands::handle_db_command(command).await,
         Command::Config { command } => commands::handle_config_command(command),
     }
