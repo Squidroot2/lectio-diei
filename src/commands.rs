@@ -6,7 +6,7 @@ use crate::args::{CommonArguments, ConfigCommand, FormattingArgs};
 use crate::client::WebClient;
 use crate::config::{Config, DbConfig};
 use crate::display::DisplaySettings;
-use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError, InitConfigError};
+use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError, InitConfigError, ReadConfigError};
 use crate::{
     args::{DatabaseCommand, DisplayReadingsArgs},
     date::DateId,
@@ -64,6 +64,7 @@ pub async fn handle_db_command(subcommand: DatabaseCommand) -> Result<(), Applic
 pub fn handle_config_command(subcommand: ConfigCommand) -> Result<(), ApplicationError> {
     match subcommand {
         ConfigCommand::Init { force } => init_config(force).map_err(ApplicationError::from),
+        ConfigCommand::Upgrade => upgrade_config().map_err(ApplicationError::ReadConfigError),
     }
 }
 
@@ -190,6 +191,15 @@ fn init_config(force: bool) -> Result<(), InitConfigError> {
             Err(e)
         }
     }
+}
+
+/// Subcommand: config upgrade
+fn upgrade_config() -> Result<(), ReadConfigError> {
+    let result = Config::upgrade_config();
+    if result.is_ok() {
+        println!("success");
+    }
+    result
 }
 
 /// Used by db clean and db refresh

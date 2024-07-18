@@ -21,6 +21,7 @@ pub enum ApplicationError {
     /// Could not retrieve from database or web
     RetrievalError(RetrievalError),
     InitConfigError(InitConfigError),
+    ReadConfigError(ReadConfigError),
 }
 
 impl ApplicationError {
@@ -31,6 +32,7 @@ impl ApplicationError {
             Self::DatabaseError(_) => 4,
             Self::RetrievalError(_) => 5,
             Self::InitConfigError(_) => 6,
+            Self::ReadConfigError(_) => 7,
             Self::NotImplemented => 100,
         }
     }
@@ -43,6 +45,7 @@ impl Display for ApplicationError {
             Self::DatabaseError(e) => write!(f, "Fatal database error: {e}"),
             Self::RetrievalError(e) => write!(f, "Can't display lectionary: {e}"),
             Self::InitConfigError(e) => write!(f, "Failed to initialize config file: {e}"),
+            Self::ReadConfigError(e) => write!(f, "Failed to Read Config file: {e}"),
             Self::NotImplemented => write!(f, "Functionality Not Implemented"),
         }
     }
@@ -55,6 +58,7 @@ impl Error for ApplicationError {
             Self::DatabaseError(e) => Some(e),
             Self::RetrievalError(e) => Some(e),
             Self::InitConfigError(e) => Some(e),
+            Self::ReadConfigError(e) => Some(e),
             Self::NotImplemented => None,
         }
     }

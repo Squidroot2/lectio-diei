@@ -19,7 +19,9 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
+    #[serde(default)]
     pub display: DisplayConfig,
+    #[serde(default)]
     pub database: DbConfig,
 }
 
@@ -44,7 +46,7 @@ impl Config {
                     Self::default()
                 }
                 Err(e) => {
-                    error!("Failed to retrieve config from file: {e}; Proceeding with default config settings",);
+                    error!("Failed to retrieve config from file ({e}); Proceeding with default config settings",);
                     Self::default()
                 }
             },
@@ -61,6 +63,35 @@ impl Config {
             Ok(path) => Self::create_config(&path, force).map_err(InitConfigError::from),
             Err(e) => Err(e.into()),
         }
+    }
+
+    //TODO This returns a ReadConfigError even when the error is a write error
+    pub fn upgrade_config() -> Result<(), ReadConfigError> {
+        let path = path::create_and_get_config_path()?;
+        //TODO handle case with no config file
+        let config = match Self::from_file(&path) {
+            Ok(config) => config,
+            Err(ReadConfigError::NotFound(_)) => {
+                warn!(
+                    "Tried to upgrade missing config file at '{}'. Creating new config instead",
+                    path.to_string_lossy()
+                );
+                Self::default()
+            }
+            Err(e) => {
+                error!("Error while trying to read config at '{}'", path.to_string_lossy());
+                return Err(e);
+            }
+        };
+        let commented_doc = config.to_commented_doc();
+        File::options()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)?
+            .write_all(commented_doc.to_string().as_bytes())?;
+        debug!("Wrote upgraded config to '{}'", path.to_string_lossy());
+        Ok(())
     }
 
     fn from_file(path: &PathBuf) -> Result<Self, ReadConfigError> {
@@ -83,9 +114,14 @@ impl Config {
 
     /// Generates a default config document including comments
     fn default_document() -> DocumentMut {
-        // This seems silly but the 'toml' crate is nicer to work with when using serde but only the 'toml_edit' crate supports adding comments
-        let basic_toml_string = toml::to_string(&Self::default()).unwrap();
-        let mut doc = basic_toml_string.parse::<DocumentMut>().unwrap();
+        Self::default().to_commented_doc()
+    }
+
+    fn to_commented_doc(&self) -> DocumentMut {
+        let basic_toml_string = toml::to_string(&self).expect("Default config should be serialiable to TOML string");
+        let mut doc = basic_toml_string
+            .parse::<DocumentMut>()
+            .expect("Serialized config string should be parseable to TOML document");
 
         // Adds a header comment
         doc.decor_mut()
@@ -126,12 +162,13 @@ impl Config {
             "past_entries",
             "Number of days in to the past to try to keep in the database",
         );
+
         doc
     }
 
     /// Puts a comment above a key.
     ///
-    /// Will panice if key doesn't exist. Should only be used by `default_document()` which is predictable and unit tested
+    /// Will panic if key doesn't exist.
     fn set_key_comment(doc: &mut DocumentMut, table: &str, key: &str, comment: &str) {
         let formatted = format!("# {comment}\n");
         doc.get_mut(table)
@@ -147,21 +184,30 @@ impl Config {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct DbConfig {
+    #[serde(default = "DbConfig::default_future_entries")]
     pub future_entries: u32,
+    #[serde(default)]
     pub past_entries: u32,
+}
+
+impl DbConfig {
+    fn default_future_entries() -> u32 {
+        30
+    }
 }
 
 impl Default for DbConfig {
     fn default() -> Self {
         Self {
-            future_entries: 30,
-            past_entries: 0,
+            future_entries: Self::default_future_entries(),
+            past_entries: u32::default(),
         }
     }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct DisplayConfig {
+    #[serde(default = "DisplayConfig::default_reading_order")]
     pub reading_order: Vec<ReadingArg>,
     #[serde(default)]
     pub original_linebreaks: bool,
@@ -170,6 +216,10 @@ pub struct DisplayConfig {
 }
 
 impl DisplayConfig {
+    fn default_reading_order() -> Vec<ReadingArg> {
+        vec![ReadingArg::Reading1, ReadingArg::Reading2, ReadingArg::Gospel]
+    }
+
     fn default_width() -> u16 {
         140
     }
@@ -178,7 +228,7 @@ impl DisplayConfig {
 impl Default for DisplayConfig {
     fn default() -> Self {
         Self {
-            reading_order: vec![ReadingArg::Reading1, ReadingArg::Reading2, ReadingArg::Gospel],
+            reading_order: Self::default_reading_order(),
             original_linebreaks: bool::default(),
             max_width: Self::default_width(),
         }

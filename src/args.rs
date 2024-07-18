@@ -92,6 +92,8 @@ pub enum ConfigCommand {
         #[arg(short, long)]
         force: bool,
     },
+    /// Writes any missing values in to the config
+    Upgrade,
 }
 
 #[derive(Args, Copy, Clone)]
