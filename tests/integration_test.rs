@@ -17,11 +17,15 @@ fn full_thread() {
     fs::create_dir_all(&config_dir).unwrap();
     fs::remove_dir_all(&config_dir).unwrap();
 
+    //TODO more of full thread
     test_config_init_no_force(&config_dir);
+
+    // Cleanup
+    fs::remove_dir_all(temp_dir_root).unwrap();
 }
 
 fn test_config_init_no_force(config_dir: &Path) {
     assert!(commands::handle_config_command(ConfigCommand::Init { force: false }).is_ok());
-    let config = config_dir.join("config.toml");
+    let config = config_dir.join(env!("CARGO_PKG_NAME")).join("config.toml");
     assert!(config.is_file());
 }
