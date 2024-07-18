@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Unreleased
 - Added formatting options (config and args) to preserve original new lines OR use custom width
 - Fixed verse not always being removed
+- Added 'config upgrade' command
 
 ## [0.1.2] - 2024-7-14
 - Updated dependencies (7/13/24)
