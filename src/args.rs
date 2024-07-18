@@ -92,6 +92,7 @@ pub enum ConfigCommand {
         #[arg(short, long)]
         force: bool,
     },
+    Upgrade,
 }
 
 #[derive(Args, Copy, Clone)]
