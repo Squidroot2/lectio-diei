@@ -5,9 +5,13 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+
+## [0.2.1] - 2024-07-20
 - Added 'config show' command
 - Fixed readings for holidays
 - Handle case where reading has no location
+
+[0.2.1]: https://github.com/Squidroot2/lectio-diei/compare/v0.2.0...v0.2.1
 
 ## [0.2.0] - 2024-07-17
 - Added formatting options (config and args) to preserve original new lines OR use custom width
