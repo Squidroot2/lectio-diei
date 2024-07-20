@@ -164,7 +164,11 @@ impl Reading {
     }
 
     fn print_heading(&self, heading: &str) {
-        println!("{heading} ({})", self.get_location());
+        if self.get_location().is_empty() {
+            println!("{heading}");
+        } else {
+            println!("{heading} ({})", self.get_location());
+        }
     }
 
     /// Removes the verse number from the first line of the psalm

@@ -6,6 +6,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Unreleased
 - Added 'config show' command
+- Fixed readings for holidays
+- Handle case where reading has no location
 
 ## [0.2.0] - 2024-07-17
 - Added formatting options (config and args) to preserve original new lines OR use custom width
