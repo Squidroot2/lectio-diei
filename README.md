@@ -4,7 +4,7 @@ CLI application for retrieving, storing, and displaying the daily Catholic readi
 
 While the core functionality is present, this is still pre-release software. Command line interface is subject to change.
 
-![Command Example](display_example_01.png)
+![Command Example](docs/images/display_example_01.png)
 
 ## Compatibility
 For now, only Linux is supported. The current issue is that the paths for the database, log, and config file follows the [XDG specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) which MacOS and Windows do not follow. I do have plans to address this.
