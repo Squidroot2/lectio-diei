@@ -94,6 +94,8 @@ pub enum ConfigCommand {
     },
     /// Writes any missing values in to the config
     Upgrade,
+    /// Writes the config to STDOUT
+    Show,
 }
 
 #[derive(Args, Copy, Clone)]
@@ -124,7 +126,7 @@ pub struct DisplayReadingsArgs {
     pub day_only: bool,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ReadingArg {
     Reading1,

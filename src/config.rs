@@ -1,5 +1,6 @@
 use std::{
     env,
+    fmt::{self, Display},
     fs::File,
     io::{self, Read, Write},
     path::PathBuf,
@@ -17,12 +18,23 @@ use crate::{
     path,
 };
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Config {
     #[serde(default)]
     pub display: DisplayConfig,
     #[serde(default)]
     pub database: DbConfig,
+}
+
+impl Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for line in toml::to_string(self).map_err(|_| fmt::Error)?.lines() {
+            if !line.is_empty() && !line.starts_with('[') {
+                writeln!(f, "{line}")?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Config {
@@ -182,7 +194,7 @@ impl Config {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DbConfig {
     #[serde(default = "DbConfig::default_future_entries")]
     pub future_entries: u32,
@@ -205,7 +217,7 @@ impl Default for DbConfig {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DisplayConfig {
     #[serde(default = "DisplayConfig::default_reading_order")]
     pub reading_order: Vec<ReadingArg>,
