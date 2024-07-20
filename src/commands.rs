@@ -65,6 +65,7 @@ pub fn handle_config_command(subcommand: ConfigCommand) -> Result<(), Applicatio
     match subcommand {
         ConfigCommand::Init { force } => init_config(force).map_err(ApplicationError::from),
         ConfigCommand::Upgrade => upgrade_config().map_err(ApplicationError::ReadConfigError),
+        ConfigCommand::Show => Ok(show_config()),
     }
 }
 
@@ -200,6 +201,12 @@ fn upgrade_config() -> Result<(), ReadConfigError> {
         println!("success");
     }
     result
+}
+
+/// Subcommand: config show
+fn show_config() {
+    let config = Config::from_file_or_default();
+    print!("{config}")
 }
 
 /// Used by db clean and db refresh
