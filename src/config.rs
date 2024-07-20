@@ -29,7 +29,7 @@ pub struct Config {
 impl Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for line in toml::to_string(self).map_err(|_| fmt::Error)?.lines() {
-            if !line.is_empty() && !line.starts_with("[") {
+            if !line.is_empty() && !line.starts_with('[') {
                 writeln!(f, "{line}")?;
             }
         }
