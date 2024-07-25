@@ -5,7 +5,8 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
-- updated dependencies (2024-07-20)
+- updated dependencies
+    - sqlx to 0.8.0
 
 ## [0.2.1] - 2024-07-20
 - Added 'config show' command
