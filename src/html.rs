@@ -76,8 +76,9 @@ impl Lectionary {
         let reading_2 = readings.reading_2;
         let resp_psalm = readings.resp_psalm.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Psalm))?;
         let gospel = readings.gospel.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Gospel))?;
+        let alleluia = readings.allelia.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Alleluia))?;
 
-        Ok(Lectionary::new(id, day_name, reading_1, reading_2, resp_psalm, gospel))
+        Ok(Lectionary::new(id, day_name, reading_1, reading_2, resp_psalm, gospel, alleluia))
     }
 }
 
@@ -106,6 +107,7 @@ struct ParsedReadings {
     reading_2: Option<Reading>,
     resp_psalm: Option<Reading>,
     gospel: Option<Reading>,
+    allelia: Option<Reading>,
 }
 
 impl ParsedReadings {
@@ -124,7 +126,7 @@ impl ParsedReadings {
                                 ReadingName::Reading2 => out.reading_2 = Some(reading),
                                 ReadingName::Psalm => out.resp_psalm = Some(reading),
                                 ReadingName::Gospel => out.gospel = Some(reading),
-                                ReadingName::Alleluia => {}
+                                ReadingName::Alleluia => out.allelia = Some(reading),
                             },
                             Err(e) => error!("Failed to process element '{name}'; Reason: {e}"),
                         }

@@ -40,7 +40,7 @@ pub enum Command {
         command: DatabaseCommand,
     },
     /// View and change the config
-    //TODO show config, set config settings
+    //TODO set config settings
     Config {
         #[command(subcommand)]
         command: ConfigCommand,
@@ -102,6 +102,8 @@ pub enum ConfigCommand {
 #[group(required = false, multiple = false)]
 pub struct FormattingArgs {
     /// Format the lines so that each has a given maximum length
+    ///
+    /// Does not affect alleluia or responsorial psalm which are always displayed with original linebreaks
     #[arg(short = 'w', long)]
     pub max_width: Option<u16>,
 
@@ -133,6 +135,7 @@ pub enum ReadingArg {
     Psalm,
     Reading2,
     Gospel,
+    Alleluia,
 }
 
 #[cfg(test)]

@@ -14,10 +14,19 @@ pub struct Lectionary {
     reading_2: Option<Reading>,
     resp_psalm: Reading,
     gospel: Reading,
+    alleluia: Reading,
 }
 
 impl Lectionary {
-    pub fn new(id: DateId, day_name: String, reading_1: Reading, reading_2: Option<Reading>, resp_psalm: Reading, gospel: Reading) -> Self {
+    pub fn new(
+        id: DateId,
+        day_name: String,
+        reading_1: Reading,
+        reading_2: Option<Reading>,
+        resp_psalm: Reading,
+        gospel: Reading,
+        alleluia: Reading,
+    ) -> Self {
         Self {
             id,
             day_name,
@@ -25,6 +34,7 @@ impl Lectionary {
             reading_2,
             resp_psalm,
             gospel,
+            alleluia,
         }
     }
 
@@ -46,6 +56,9 @@ impl Lectionary {
     pub fn get_reading_2(&self) -> Option<&Reading> {
         self.reading_2.as_ref()
     }
+    pub fn get_alleluia(&self) -> &Reading {
+        &self.alleluia
+    }
 }
 
 impl From<LectionaryDbEntity> for Lectionary {
@@ -57,6 +70,7 @@ impl From<LectionaryDbEntity> for Lectionary {
             reading_2: entity.second_reading_row.map(Reading::from),
             resp_psalm: Reading::from(entity.psalm_row),
             gospel: Reading::from(entity.gospel_row),
+            alleluia: Reading::from(entity.alleluia_row),
         }
     }
 }

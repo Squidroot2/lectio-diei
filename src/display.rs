@@ -112,6 +112,9 @@ impl Lectionary {
                     self.get_gospel()
                         .pretty_print_as_reading(ReadingName::Gospel.as_str(), &dashes, settings.line_breaks);
                 }
+                ReadingArg::Alleluia => self
+                    .get_alleluia()
+                    .pretty_print_as_alleliua(ReadingName::Alleluia.as_str(), &dashes),
             }
         }
     }
@@ -160,6 +163,14 @@ impl Reading {
         } else {
             error!("Can't format the psalm: it has no content");
         }
+        println!("{seperator}");
+    }
+
+    /// Similar to psalm but without modifications to the first line
+    fn pretty_print_as_alleliua(&self, heading: &str, seperator: &str) {
+        self.print_heading(heading);
+        println!("{seperator}");
+        println!("{}", self.get_text());
         println!("{seperator}");
     }
 
