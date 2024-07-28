@@ -9,9 +9,12 @@ fn full_thread() {
     let data_dir = temp_dir_root.join("data");
     let config_dir = temp_dir_root.join("config");
     let state_dir = temp_dir_root.join("state");
-    env::set_var("XDG_DATA_HOME", data_dir.as_os_str());
-    env::set_var("XDG_STATE_HOME", state_dir.as_os_str());
-    env::set_var("XDG_CONFIG_HOME", config_dir.as_os_str());
+    // SAFETY: integration test runs serially in single thread
+    unsafe {
+        env::set_var("XDG_DATA_HOME", data_dir.as_os_str());
+        env::set_var("XDG_STATE_HOME", state_dir.as_os_str());
+        env::set_var("XDG_CONFIG_HOME", config_dir.as_os_str());
+    }
 
     // Create the directories so that when we remove them, we don't ignore the error
     fs::create_dir_all(&config_dir).unwrap();

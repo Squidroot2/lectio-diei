@@ -40,6 +40,7 @@ impl DatabaseHandle {
         Self::insert_reading(&mut transaction, lectionary.get_reading_1(), id, DbReadingType::FirstReading).await?;
         Self::insert_reading(&mut transaction, lectionary.get_resp_psalm(), id, DbReadingType::Psalm).await?;
         Self::insert_reading(&mut transaction, lectionary.get_gospel(), id, DbReadingType::Gospel).await?;
+        Self::insert_reading(&mut transaction, lectionary.get_alleluia(), id, DbReadingType::Alleluia).await?;
         if let Some(reading_2) = lectionary.get_reading_2() {
             Self::insert_reading(&mut transaction, reading_2, id, DbReadingType::SecondReading).await?;
         }
@@ -61,6 +62,7 @@ impl DatabaseHandle {
         let psalm_row = self.get_reading_row(id, DbReadingType::Psalm).await?;
         let gospel_row = self.get_reading_row(id, DbReadingType::Gospel).await?;
         let second_reading_row = self.get_reading_row(id, DbReadingType::SecondReading).await.ok();
+        let alleluia_row = self.get_reading_row(id, DbReadingType::Alleluia).await?;
 
         let entity = LectionaryDbEntity {
             lect_row,
@@ -68,6 +70,7 @@ impl DatabaseHandle {
             psalm_row,
             gospel_row,
             second_reading_row,
+            alleluia_row,
         };
 
         Ok(Lectionary::from(entity))
@@ -109,7 +112,6 @@ impl DatabaseHandle {
         let all_ids = sqlx::query_as::<_, DateId>("SELECT id FROM lectionary")
             .fetch_all(&self.connection)
             .await?;
-        //TODO remove new ones too
         let ids_outside_range = all_ids
             .into_iter()
             .filter(|id| id < &earliest || maybe_latest.as_ref().is_some_and(|latest| *id > *latest));
@@ -220,6 +222,7 @@ pub struct LectionaryDbEntity {
     pub psalm_row: ReadingRow,
     pub gospel_row: ReadingRow,
     pub second_reading_row: Option<ReadingRow>,
+    pub alleluia_row: ReadingRow,
 }
 
 #[derive(Debug, FromRow, PartialEq, Eq)]
@@ -252,6 +255,7 @@ enum DbReadingType {
     SecondReading,
     Psalm,
     Gospel,
+    Alleluia,
 }
 
 impl DbReadingType {
@@ -261,6 +265,7 @@ impl DbReadingType {
             Self::SecondReading => "second_reading",
             Self::Psalm => "psalm",
             Self::Gospel => "gospel",
+            Self::Alleluia => "alleluia",
         }
     }
 }
@@ -269,4 +274,15 @@ impl Display for DbReadingType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[sqlx::test]
+    fn test_db_init() {
+        assert!(DatabaseHandle::init_db("sqlite://:memory:").await.is_ok());
+    }
+
 }

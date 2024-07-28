@@ -153,14 +153,14 @@ impl Config {
             &mut doc,
             "display",
             "original_linebreaks",
-            "Whether to use original linebreaks as displayed on USCCB site. If true, max_width is ignored. Note: Resp. Psalm always uses original line breaks",
+            "Whether to use original linebreaks as displayed on USCCB site. If true, max_width is ignored. Note: Resp. Psalm and Alleluia always use original line breaks",
         );
 
         Self::set_key_comment(
             &mut doc,
             "display" ,
             "max_width" ,
-            "Maximum width for formatting readings. Ignored if original_linebreaks is true. Not used for Psalm. Set to 0 for no line breaks" );
+            "Maximum width for formatting readings. Ignored if original_linebreaks is true. Not used for Psalm/Alleluia. Set to 0 for no line breaks" );
 
         Self::set_key_comment(
             &mut doc,
