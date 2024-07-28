@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Unreleased
 
-## [0.3.0] - 2024-07-24
+## [0.3.0] - 2024-07-28
 - Added Alleluia
 
 [0.3.0]: https://github.com/Squidroot2/lectio-diei/compare/v0.2.2...v0.3.0
