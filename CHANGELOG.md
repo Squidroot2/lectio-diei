@@ -5,6 +5,7 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+- Added alias "reading" for "readings" arg
 
 ## [0.3.0] - 2024-07-28
 - Added Alleluia
