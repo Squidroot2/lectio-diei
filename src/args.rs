@@ -116,7 +116,7 @@ pub struct FormattingArgs {
 #[group(required = false, multiple = false)]
 pub struct DisplayReadingsArgs {
     /// Displays the readings in the specified order
-    #[arg(short, long, value_enum, num_args=1..)]
+    #[arg(short, long, alias="reading", value_enum, num_args=1..)]
     pub readings: Option<Vec<ReadingArg>>,
 
     /// Displays all readings in default order
