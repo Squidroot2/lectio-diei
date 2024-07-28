@@ -10,6 +10,7 @@ fn full_thread() {
     let config_dir = temp_dir_root.join("config");
     let state_dir = temp_dir_root.join("state");
     // SAFETY: integration test runs serially in single thread
+    #[allow(unused_unsafe)]
     unsafe {
         env::set_var("XDG_DATA_HOME", data_dir.as_os_str());
         env::set_var("XDG_STATE_HOME", state_dir.as_os_str());
