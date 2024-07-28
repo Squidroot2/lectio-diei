@@ -41,8 +41,10 @@ After running any valid command at least once, you should have a config file at 
     - [x] Configurable line wrapping
     - [ ] Configurable colors for each reading
     - [ ] Improved heading formatting
-- [ ] Adding the Alleluia as an option
-- [ ] Show and change config options from commandline
+- [x] Adding the Alleluia as an option
+- [ ] Config options from commandline
+  - [x] Show
+  - [ ] Change
 - [ ] Windows support (maybe others?)
 - [ ] Store single day without displaying
 - [ ] No database mode

@@ -5,7 +5,11 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+
+## [0.3.0] - 2024-07-24
 - Added Alleluia
+
+[0.3.0]: https://github.com/Squidroot2/lectio-diei/compare/v0.2.2...v0.3.0
 
 ## [0.2.2] - 2024-07-24
 - updated dependencies
