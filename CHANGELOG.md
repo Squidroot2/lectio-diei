@@ -5,9 +5,13 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+
+## [0.3.1] - 2024-08-10
 - Added alias "reading" for "readings" arg
 - Updated dependencies
     - scraper to 0.20.0
+
+[0.3.1]: https://github.com/Squidroot2/lectio-diei/compare/v0.3.0...v0.3.1
 
 ## [0.3.0] - 2024-07-28
 - Added Alleluia
