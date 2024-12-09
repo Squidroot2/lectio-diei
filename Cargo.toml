@@ -1,6 +1,6 @@
 [package]
 name = "lectio-diei"
-version = "0.3.1"
+version = "0.3.2-dev1"
 edition = "2021"
 description = "CLI application for displaying the daily Catholic readings"
 repository = "https://github.com/Squidroot2/lectio-diei"
@@ -22,7 +22,7 @@ clap = { version = "4.5.8", features = ["derive"] }
 log = "0.4.22"
 regex = "1.10.5"
 reqwest = "0.12.5"
-scraper = {version = "0.20.0", features = ["atomic"] }
+scraper = {version = "0.21.0", features = ["atomic"] }
 serde = { version = "1.0.204", features = ["derive"] }
 simplelog = { version = "0.12.2", features = ["termcolor"] }
 sqlx = { version = "0.8.0", features = ["sqlite", "runtime-tokio"] }
