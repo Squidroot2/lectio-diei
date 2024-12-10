@@ -5,11 +5,15 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+
+## [0.3.2] - 2024-12-09
 - Code lint
 - Updated dependencies
     - scraper to 0.21.0
     - sqlx to 0.8.2
 - Fix for Christmas days
+
+[0.3.2]: https://github.com/Squidroot2/lectio-diei/compare/v0.3.1...v0.3.2
 
 ## [0.3.1] - 2024-08-10
 - Added alias "reading" for "readings" arg

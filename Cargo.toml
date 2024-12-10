@@ -1,6 +1,6 @@
 [package]
 name = "lectio-diei"
-version = "0.3.2-dev4"
+version = "0.3.2"
 edition = "2021"
 description = "CLI application for displaying the daily Catholic readings"
 repository = "https://github.com/Squidroot2/lectio-diei"
