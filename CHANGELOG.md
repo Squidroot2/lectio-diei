@@ -6,6 +6,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Unreleased
 - Code lint
+- Updated dependencies
+    - scraper to 0.21.0
+
 
 ## [0.3.1] - 2024-08-10
 - Added alias "reading" for "readings" arg
