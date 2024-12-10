@@ -79,7 +79,8 @@ async fn count_entries() -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
     let count = db.get_lectionary_count().await.map_err(DatabaseGetError::from)?;
 
-    Ok(println!("{count}"))
+    println!("{count}");
+    Ok(())
 }
 
 /// Subcommand: db remove
@@ -112,7 +113,8 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
         };
     }
 
-    Ok(println!("{removed_count}"))
+    println!("{removed_count}");
+    Ok(())
 }
 
 /// Subcommand: db purge
@@ -122,7 +124,8 @@ async fn purge_db() -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
     let entries_removed = db.remove_all().await.map_err(DatabaseError::DeleteError)?;
 
-    Ok(println!("{entries_removed}"))
+    println!("{entries_removed}");
+    Ok(())
 }
 
 /// Subcommand: db clean
@@ -133,7 +136,9 @@ async fn clean_db(all: bool) -> Result<(), DatabaseError> {
     let db = DatabaseHandle::new().await?;
     let config = Config::from_file_or_default();
     let num_removed = clean_db_inner(&db, config.database, all).await?;
-    Ok(println!("{num_removed}"))
+
+    println!("{num_removed}");
+    Ok(())
 }
 
 /// Subcommand: db update
@@ -145,7 +150,9 @@ async fn update_db() -> Result<(), DatabaseInitError> {
     let web_client = WebClient::default();
     let db_config = Config::from_file_or_default().database;
     let num_added = update_db_inner(&db, db_config, &web_client).await;
-    Ok(println!("{num_added}"))
+
+    println!("{num_added}");
+    Ok(())
 }
 
 /// Subcommand: db refresh
@@ -185,7 +192,10 @@ async fn show_db() -> Result<(), DatabaseError> {
 /// Subcomand: config init
 fn init_config(force: bool) -> Result<(), InitConfigError> {
     match Config::initialize_default_config(force) {
-        Ok(()) => Ok(println!("success")),
+        Ok(()) => {
+            println!("success");
+            Ok(())
+        },
         Err(e) => {
             if matches!(e, InitConfigError::AlreadyExists(_)) && !force {
                 warn!("Config file already exists. Must use '--force' to overwrite existing file");
