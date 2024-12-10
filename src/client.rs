@@ -22,7 +22,7 @@ impl WebClient {
 
         if let Some(endpoint) = html::get_holiday_day_reading_link(&document) {
             info!("{date_id} seems to be a holiday. Using the link for the daytime reading");
-            let url = Self::url_for_endpoint(endpoint);
+            let url = Self::url_for_link(endpoint);
             let document = self.get_document_from_url(url).await?;
             return Lectionary::create_from_html(date_id, &document).map_err(WebGetError::ParseError)
         }
@@ -43,14 +43,19 @@ impl WebClient {
 
     fn url_for_date(date_id: &DateId) -> Url {
         let url_string = format!("{BASE_URL}/bible/readings/{date_id}.cfm");
-        Url::parse(&url_string).expect("Formmatted string is valid URL")
+        Url::parse(&url_string).expect("Formatted string is valid URL")
     }
 
-    fn url_for_endpoint(endpoint: &str) -> Url {
-        let mut url_string = String::new();
-        url_string.push_str(BASE_URL);
-        url_string.push_str(endpoint);
-        Url::parse(&url_string).expect("Base URL plus endpoint must be valid URL")
+    // Can be given either a full url or a relative one
+    fn url_for_link(link: &str) -> Url {
+        if let Ok(url) = Url::parse(link) {
+            url
+        } else {
+            let mut url_string = String::new();
+            url_string.push_str(BASE_URL);
+            url_string.push_str(link);
+            Url::parse(&url_string).expect("Base URL plus endpoint must be valid URL")
+        }
     }
 }
 
@@ -68,8 +73,15 @@ mod tests {
 
     #[test]
     fn correct_url_for_endpoint() {
-        let url = WebClient::url_for_endpoint("/example/endpoint");
+        let url = WebClient::url_for_link("/example/endpoint");
         assert_eq!(url.origin().ascii_serialization(), BASE_URL);
+        assert_eq!(url.path(), "/example/endpoint");
+    }
+
+    #[test]
+    fn correct_url_for_absolute() {
+        let url = WebClient::url_for_link("https://example.com/example/endpoint");
+        assert_eq!(url.origin().ascii_serialization(), "https://example.com");
         assert_eq!(url.path(), "/example/endpoint");
     }
 }

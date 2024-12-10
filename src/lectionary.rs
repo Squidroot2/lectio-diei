@@ -116,7 +116,7 @@ impl TryFrom<String> for ReadingName {
             Self::READING2 | "Reading 2" => Ok(Self::Reading2),
             Self::PSALM => Ok(Self::Psalm),
             Self::GOSPEL => Ok(Self::Gospel),
-            Self::ALLELUIA => Ok(Self::Alleluia),
+            Self::ALLELUIA | "Alleluia See" => Ok(Self::Alleluia),
             _ => Err(Self::Error::from(value)),
         }
     }

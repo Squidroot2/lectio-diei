@@ -1102,7 +1102,7 @@ dependencies = [
 
 [[package]]
 name = "lectio-diei"
-version = "0.3.2-dev2"
+version = "0.3.2-dev3"
 dependencies = [
  "chrono",
  "clap",

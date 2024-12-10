@@ -49,7 +49,7 @@ fn reading_location_selector() -> &'static Selector {
 /// Use within element found by `CONTAINER_SELECTOR`. On a holiday page, finds the link for the day time reading
 fn day_link_selector() -> &'static Selector {
     static DAY_LINK_SELECTOR: OnceLock<Selector> = OnceLock::new();
-    DAY_LINK_SELECTOR.get_or_init(|| Selector::parse("div.b-lectionary div.innerblock a[href$=\"day.cfm\"]").unwrap())
+    DAY_LINK_SELECTOR.get_or_init(|| Selector::parse("div.b-lectionary div.innerblock a[href$=\"day.cfm\" i ]").unwrap())
 }
 
 impl Lectionary {
@@ -94,9 +94,12 @@ impl Reading {
             .select(reading_content_selector())
             .next()
             .ok_or(ReadingHtmlError::MissingContent)?;
-        let text = element_to_plain_text(&content);
+        let full_text = element_to_plain_text(&content);
 
-        Ok(Reading::new(location, text))
+        // Some reading will have alternates noted with "OR:". only take first
+        let text = full_text.split("OR:\n").next().expect("Split will always have at least 1 element");
+
+        Ok(Reading::new(location, text.to_owned()))
     }
 }
 
@@ -143,7 +146,7 @@ impl ParsedReadings {
 }
 
 /// Converts an element to plain text, removing tags like '\<strong\>' while keeping the text within those elements
-pub fn element_to_plain_text(element: &ElementRef) -> String {
+fn element_to_plain_text(element: &ElementRef) -> String {
     let mut plain_text = String::new();
     for node in element.children() {
         match node.value() {
