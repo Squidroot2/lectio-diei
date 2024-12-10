@@ -5,7 +5,9 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
-- Updated scraper to 0.21
+- Code lint
+- Updated dependencies
+    - scraper to 0.21.0
 
 
 ## [0.3.1] - 2024-08-10
