@@ -8,6 +8,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Code lint
 - Updated dependencies
     - scraper to 0.21.0
+    - sqlx to 0.8.2
 - Fix for Christmas days
 
 ## [0.3.1] - 2024-08-10
