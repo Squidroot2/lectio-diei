@@ -193,7 +193,7 @@ impl Reading {
     }
 
     fn print_word_wrapped_text(text: &str, max_width: u16) {
-        let words = text.split_ascii_whitespace();
+        let words = text.split_whitespace();
         let mut current_line = String::new();
         for word in words {
             if (current_line.len() + word.len()) > max_width.into() {
