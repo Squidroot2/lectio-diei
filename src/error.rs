@@ -365,7 +365,7 @@ pub struct ReadingNameFromStringError {
 impl std::error::Error for ReadingNameFromStringError {}
 impl fmt::Display for ReadingNameFromStringError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Unknown reading name: {}", self.value)
+        write!(f, "Unknown reading name: '{}'", self.value)
     }
 }
 impl From<String> for ReadingNameFromStringError {
