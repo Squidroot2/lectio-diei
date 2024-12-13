@@ -67,6 +67,7 @@ pub enum DatabaseCommand {
     /// Shows all of the lectionary rows in the database
     ///
     /// Prints every row of the lectionary table, sorted by date, as "[date] [name]"
+    #[command(alias = "list")]
     Show,
     /// Deletes all data in the database
     ///

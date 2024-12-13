@@ -5,6 +5,7 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+- Added "list" alias for "db show" subcommand
 
 ## [0.3.2] - 2024-12-09
 - Code lint
