@@ -7,6 +7,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Unreleased
 - Added "list" alias for "db show" subcommand
 - More Logging
+- Updated dependencies
+    - scraper to 0.22.0
 
 ## [0.3.2] - 2024-12-09
 - Code lint
