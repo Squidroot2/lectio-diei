@@ -119,7 +119,10 @@ impl ParsedReadings {
 
         let readings = container.select(readings_selector());
         for reading_elmt in readings {
+            debug!("parsing reading {:?} in container {:?}", reading_elmt, container);
+            trace!("full reading elmnt: \n{}", reading_elmt.inner_html());
             if let Some(name_elmnt) = reading_elmt.select(reading_name_selector()).next() {
+                debug!("Extracting reading name from reading name element {}", name_elmnt.html());
                 match ReadingName::try_from(replace_entities(name_elmnt.inner_html())) {
                     Ok(name) => {
                         info!("Idenitfied reading name as '{name}'. Parsing reading...");
