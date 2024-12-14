@@ -2,6 +2,8 @@
 
 CLI application for retrieving, storing, and displaying the daily Catholic readings. Retrieved from the [United States Conference of Catholic Bishops site](https://bible.usccb.org/). After being retrieved, the readings are stored in a local sqlite database. This way, they can be displayed on-demand with low latency.
 
+*Please note that this is a personal project and that I am not affiliated with the USCCB*
+
 While the core functionality is present, this is still pre-release software. Command line interface is subject to change.
 
 ![Command Example](docs/images/display_example_01.png)
