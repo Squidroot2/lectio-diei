@@ -1,10 +1,9 @@
 use log::*;
-use reqwest::{Client, Url};
+use reqwest::{Client, StatusCode, Url};
 use scraper::Html;
 
 use crate::date::DateId;
-use crate::error::WebGetError;
-use crate::html;
+use crate::html::{self, LectionaryHtmlError};
 use crate::lectionary::Lectionary;
 
 const BASE_URL: &str = "https://bible.usccb.org";
@@ -57,6 +56,18 @@ impl WebClient {
             Url::parse(&url_string).expect("Base URL plus endpoint must be valid URL")
         }
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum WebGetError {
+    #[error("Web client error on GET request: ({0})")]
+    ClientError(#[source] reqwest::Error),
+    #[error("Error status code on GET request: {0}")]
+    ErrorStatus(StatusCode),
+    #[error("Error reading response: ({0})")]
+    ResponseError(#[source] reqwest::Error),
+    #[error("Error creating lectionary from html: ({0})")]
+    ParseError(#[source] LectionaryHtmlError),
 }
 
 #[cfg(test)]

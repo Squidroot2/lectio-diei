@@ -10,8 +10,6 @@ use scraper::Node;
 use scraper::Selector;
 
 use crate::date::DateId;
-use crate::error::LectionaryHtmlError;
-use crate::error::ReadingHtmlError;
 use crate::lectionary::Lectionary;
 use crate::lectionary::Reading;
 use crate::lectionary::ReadingName;
@@ -93,7 +91,7 @@ impl Reading {
         let content = reading_container
             .select(reading_content_selector())
             .next()
-            .ok_or(ReadingHtmlError::MissingContent)?;
+            .ok_or(ReadingHtmlError)?;
         let full_text = element_to_plain_text(&content);
 
         // Some reading will have alternates noted with "OR:". only take first
@@ -218,6 +216,22 @@ pub fn get_holiday_day_reading_link(doc: &Html) -> Option<&str> {
         );
         None
     }
+}
+
+/// Represents a failure to parse an HTML element into a Reading struct
+#[derive(thiserror::Error, Debug)]
+#[error("Missing Content from Reading")]
+struct ReadingHtmlError;
+
+/// Represents a failure to parse a HTML document in to a Lectionary struct
+#[derive(thiserror::Error, Debug)]
+pub enum LectionaryHtmlError {
+    #[error("No main readings container found")]
+    NoContainerFound,
+    #[error("No day name element found")]
+    NoDayNameElementFound,
+    #[error("Missing required reading '{0}'")]
+    MissingReading(ReadingName),
 }
 
 #[cfg(test)]

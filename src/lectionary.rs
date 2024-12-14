@@ -4,7 +4,6 @@ use log::*;
 
 use crate::date::DateId;
 use crate::db::{LectionaryDbEntity, ReadingRow};
-use crate::error::ReadingNameFromStringError;
 
 #[derive(Debug)]
 pub struct Lectionary {
@@ -119,6 +118,19 @@ impl TryFrom<String> for ReadingName {
             Self::ALLELUIA | "Alleluia See" => Ok(Self::Alleluia),
             _ => Err(Self::Error::from(value)),
         }
+    }
+}
+
+/// Error for `TryFrom<String>` on `ReadingName`
+#[derive(thiserror::Error, Debug)]
+#[error("Unknown reading name: '{value}'")]
+pub struct ReadingNameFromStringError {
+    value: String,
+}
+
+impl From<String> for ReadingNameFromStringError {
+    fn from(value: String) -> Self {
+        Self { value }
     }
 }
 

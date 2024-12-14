@@ -1,11 +1,10 @@
 //TODO Windows support
 use std::env::{self, VarError};
-use std::fs;
 use std::path::PathBuf;
+use std::{fs, io};
 
 use log::*;
 
-use crate::error::PathError;
 //TODO Probably don't need to return errors. Just log and return an option for these public functions
 /// Returns the path of the db file, after ensuring all parent directories have been created
 pub fn create_and_get_db_path() -> Result<PathBuf, PathError> {
@@ -127,4 +126,13 @@ mod tests {
         assert!(config_path.parent().unwrap().is_dir());
         assert_eq!("toml", config_path.extension().unwrap().to_string_lossy());
     }
+}
+
+/// Represents a failure to identify a file path
+#[derive(thiserror::Error, Debug)]
+pub enum PathError {
+    #[error("Could not get HOME environment variable: ({0})")]
+    NoHome(#[from] VarError),
+    #[error("Failed to create parent directory: ({0})")]
+    PathCreateFailure(#[from] io::Error),
 }
