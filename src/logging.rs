@@ -1,5 +1,3 @@
-use std::error::Error;
-use std::fmt;
 use std::fs::File;
 use std::io;
 
@@ -11,8 +9,7 @@ use simplelog::{
 
 use crate::{
     colorful_logger::{ColorConfig, ColorfulLogger},
-    error::PathError,
-    path,
+    path::{self, PathError},
 };
 
 /// Initializes a combined logger included a terminal logger and a file logger. If file logger fails to be created, still initializes the terminal logger
@@ -94,37 +91,10 @@ pub struct LoggingOptions {
 }
 
 /// Represents a failure to open a file for the purpose of writing logs to it
-#[derive(Debug)]
+#[derive(thiserror::Error, Debug)]
 enum FileLoggerError {
-    PathError(PathError),
-    FileOpenError(io::Error),
-}
-
-impl fmt::Display for FileLoggerError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::PathError(e) => write!(f, "Failed to get path to log: {e}"),
-            Self::FileOpenError(e) => write!(f, "Failed to open log file: {e}"),
-        }
-    }
-}
-
-impl From<io::Error> for FileLoggerError {
-    fn from(e: io::Error) -> FileLoggerError {
-        FileLoggerError::FileOpenError(e)
-    }
-}
-impl From<PathError> for FileLoggerError {
-    fn from(e: PathError) -> FileLoggerError {
-        FileLoggerError::PathError(e)
-    }
-}
-
-impl Error for FileLoggerError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::FileOpenError(e) => Some(e),
-            Self::PathError(e) => Some(e),
-        }
-    }
+    #[error("Failed to get path to log: ({0})")]
+    PathError(#[from] PathError),
+    #[error("Failed to open log file: ({0})")]
+    FileOpenError(#[from] io::Error),
 }

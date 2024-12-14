@@ -2,13 +2,12 @@
 
 use log::*;
 use sqlx::{
-    migrate::MigrateDatabase,
+    migrate::{MigrateDatabase, MigrateError},
     sqlite::{Sqlite, SqlitePool},
     Executor, FromRow, Row, Transaction,
 };
 
-use crate::date::DateId;
-use crate::error::{DatabaseGetError, DatabaseInitError};
+use crate::{date::DateId, path::PathError};
 use crate::lectionary::{Lectionary, Reading};
 use crate::path::{self};
 
@@ -275,6 +274,29 @@ impl Display for DbReadingType {
         write!(f, "{}", self.as_str())
     }
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum DatabaseInitError {
+    #[error("Cannot construct database URL: ({0})")]
+    CannotGetUrl(#[source] PathError),
+    #[error("Cannot create database: ({0})")]
+    CreateDatabaseError(#[source] sqlx::Error),
+    #[error("Failed to create a connection pool for the database: ({0})")]
+    PoolCreationFailed(#[source] sqlx::Error),
+    #[error("Failed to enable foreign keys in the database: ({0})")]
+    PragmaForeignKeysFailure(#[source] sqlx::Error),
+    #[error("Failed to run migration scripts for database: ({0})")]
+    MigrationError(#[source] MigrateError),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum DatabaseGetError {
+    #[error("Query returned no results")]
+    NotPresent,
+    #[error("Select Query failed: ({0})")]
+    QueryError(#[from] sqlx::Error),
+}
+
 
 #[cfg(test)]
 mod tests {

@@ -2,8 +2,7 @@ use std::process::ExitCode;
 
 use clap::Parser;
 use lectio_diei::args::{Arguments, Command};
-use lectio_diei::commands::{self};
-use lectio_diei::error::ApplicationError;
+use lectio_diei::commands::{self, ApplicationError};
 use lectio_diei::logging::{self, LoggingOptions};
 use log::*;
 

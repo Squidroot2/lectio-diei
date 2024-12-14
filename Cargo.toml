@@ -1,6 +1,6 @@
 [package]
 name = "lectio-diei"
-version = "0.3.3-dev3"
+version = "0.3.3-dev4"
 edition = "2021"
 description = "CLI application for displaying the daily Catholic readings"
 repository = "https://github.com/Squidroot2/lectio-diei"
@@ -27,6 +27,7 @@ serde = { version = "1.0.204", features = ["derive"] }
 simplelog = { version = "0.12.2", features = ["termcolor"] }
 sqlx = { version = "0.8.2", features = ["sqlite", "runtime-tokio"] }
 termcolor = "1.4.1"
+thiserror = "2.0.7"
 time = "0.3.36"
 tokio =  { version = "1.38", features = ["full"] }
 toml = "0.8.14"
@@ -39,6 +40,7 @@ pedantic = {level = "warn", priority = -1}
 # These lints limit naming conventions in ways I don't like
 module_name_repetitions = "allow"
 struct_field_names = "allow"
+enum_variant_names = "allow"
 
 # Nothing can be done here
 multiple_crate_versions = "allow"

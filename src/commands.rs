@@ -1,12 +1,14 @@
-use chrono::{Local, TimeDelta};
+
+use chrono::{Local, ParseError, TimeDelta};
 use log::*;
 use tokio::task::JoinSet;
 
 use crate::args::{CommonArguments, ConfigCommand, FormattingArgs};
 use crate::client::WebClient;
-use crate::config::{Config, DbConfig};
+use crate::config::{Config, DbConfig, InitConfigError, ReadConfigError};
+use crate::db::{DatabaseGetError, DatabaseInitError};
 use crate::display::DisplaySettings;
-use crate::error::{ApplicationError, ArgumentError, DatabaseError, DatabaseGetError, DatabaseInitError, InitConfigError, ReadConfigError};
+use crate::orchestration::{DatabaseError, RetrievalError};
 use crate::{
     args::{DatabaseCommand, DisplayReadingsArgs},
     date::DateId,
@@ -258,7 +260,7 @@ async fn update_db_inner(db: &DatabaseHandle, db_config: DbConfig, web_client: &
 
     while let Some(thread_result) = tasks.join_next().await {
         match thread_result {
-            Err(e) => error!("Failed to store a lectionar (Thread panicked!): {}", e),
+            Err(e) => error!("Failed to store a lectionary (Thread panicked!): {}", e),
             Ok(Err(e)) => error!("Failed to store a lectionary: {}", e),
             Ok(Ok(new)) => {
                 if new {
@@ -269,3 +271,49 @@ async fn update_db_inner(db: &DatabaseHandle, db_config: DbConfig, web_client: &
     }
     count_added
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum ArgumentError {
+    #[error("Invalid date Argument: ({0})")]
+    InvalidDate(#[from] ParseError),
+}
+
+/// Represents a terminating error in the application. Each variant is associated with an exit code
+#[derive(thiserror::Error, Debug)]
+pub enum ApplicationError {
+    #[error("Functionality Not Implemented")]
+    NotImplemented,
+    #[error("Bad arugment: ({0})")]
+    BadArgument(#[from] ArgumentError),
+    #[error("Fatal database error: ({0})")]
+    DatabaseError(#[from] DatabaseError),
+    /// Could not retrieve from database or web
+    #[error("Can't display lectionary: ({0})")]
+    RetrievalError(#[from] RetrievalError),
+    #[error("Failed to initialize config file: ({0})")]
+    InitConfigError(#[from] InitConfigError),
+    #[error("Failed to Read Config file: ({0})")]
+    ReadConfigError(#[from] ReadConfigError),
+}
+
+impl ApplicationError {
+    #[must_use = "Return from main"]
+    pub fn exit_code(&self) -> u8 {
+        match self {
+            Self::BadArgument(_) => 3,
+            Self::DatabaseError(_) => 4,
+            Self::RetrievalError(_) => 5,
+            Self::InitConfigError(_) => 6,
+            Self::ReadConfigError(_) => 7,
+            Self::NotImplemented => 100,
+        }
+    }
+}
+
+impl From<DatabaseInitError> for ApplicationError {
+    fn from(value: DatabaseInitError) -> Self {
+        Self::from(DatabaseError::InitError(value))
+    }
+}
+
+

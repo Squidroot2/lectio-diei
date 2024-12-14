@@ -14,8 +14,7 @@ use toml_edit::{self, DocumentMut};
 
 use crate::{
     args::ReadingArg,
-    error::{InitConfigError, ReadConfigError},
-    path,
+    path::{self, PathError},
 };
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -261,6 +260,49 @@ impl ReadingArg {
         }
 
         names.join(", ")
+    }
+}
+
+/// Represents a failure to create a new config file
+#[derive(thiserror::Error, Debug)]
+pub enum InitConfigError {
+    #[error("Config file already exists")]
+    AlreadyExists(#[source] io::Error),
+    #[error("Cannot get path for config file: ({0})")]
+    CannotGetPath(#[from] PathError),
+    #[error("I/O Error encountered while initializing config: ({0})")]
+    IOError(#[source] io::Error),
+}
+
+impl From<io::Error> for InitConfigError {
+    fn from(value: io::Error) -> Self {
+        match value.kind() {
+            io::ErrorKind::AlreadyExists => Self::AlreadyExists(value),
+            _ => Self::IOError(value),
+        }
+    }
+}
+
+/// Represents a failure to read the config file
+#[derive(thiserror::Error, Debug)]
+pub enum ReadConfigError {
+    #[error("Cannot get path to config file: ({0})")]
+    CannotGetPath(#[from] PathError),
+    #[error("Missing config file: ({0})")]
+    NotFound(#[source] io::Error),
+    #[error("I/O Error encountered while reading config: ({0})")]
+    IOError(#[source] io::Error),
+    #[error("Failed to deserialize config file: ({0})")]
+    DeserializationError(#[from] de::Error),
+}
+
+/// `io::Error` can be `NotFound` or a generic `IOError`
+impl From<io::Error> for ReadConfigError {
+    fn from(value: io::Error) -> Self {
+        match value.kind() {
+            io::ErrorKind::NotFound => Self::NotFound(value),
+            _ => Self::IOError(value),
+        }
     }
 }
 
