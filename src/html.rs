@@ -55,11 +55,11 @@ impl Lectionary {
         let container = document
             .select(container_selector())
             .next()
-            .ok_or(LectionaryHtmlError::NoContainerFound)?;
+            .ok_or_else(|| LectionaryHtmlError::NoContainerFound { date: id.clone() })?;
         let day_name_elmnt = container
             .select(day_name_selector())
             .next()
-            .ok_or(LectionaryHtmlError::NoDayNameElementFound)?;
+            .ok_or_else(|| LectionaryHtmlError::NoDayNameElementFound { date: id.clone() })?;
         // First line of the inner text
         let day_name = element_to_plain_text(&day_name_elmnt)
             .lines()
@@ -68,13 +68,23 @@ impl Lectionary {
             .to_owned();
 
         let readings = ParsedReadings::extract_from_container(container);
-        let reading_1 = readings
-            .reading_1
-            .ok_or(LectionaryHtmlError::MissingReading(ReadingName::Reading1))?;
+        let reading_1 = readings.reading_1.ok_or_else(|| LectionaryHtmlError::MissingReading {
+            reading: ReadingName::Reading1,
+            date: id.clone(),
+        })?;
         let reading_2 = readings.reading_2;
-        let resp_psalm = readings.resp_psalm.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Psalm))?;
-        let gospel = readings.gospel.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Gospel))?;
-        let alleluia = readings.allelia.ok_or(LectionaryHtmlError::MissingReading(ReadingName::Alleluia))?;
+        let resp_psalm = readings.resp_psalm.ok_or_else(|| LectionaryHtmlError::MissingReading {
+            reading: ReadingName::Psalm,
+            date: id.clone(),
+        })?;
+        let gospel = readings.gospel.ok_or_else(|| LectionaryHtmlError::MissingReading {
+            reading: ReadingName::Gospel,
+            date: id.clone(),
+        })?;
+        let alleluia = readings.allelia.ok_or_else(|| LectionaryHtmlError::MissingReading {
+            reading: ReadingName::Alleluia,
+            date: id.clone(),
+        })?;
 
         Ok(Lectionary::new(id, day_name, reading_1, reading_2, resp_psalm, gospel, alleluia))
     }
@@ -226,12 +236,12 @@ struct ReadingHtmlError;
 /// Represents a failure to parse a HTML document in to a Lectionary struct
 #[derive(thiserror::Error, Debug)]
 pub enum LectionaryHtmlError {
-    #[error("No main readings container found")]
-    NoContainerFound,
-    #[error("No day name element found")]
-    NoDayNameElementFound,
-    #[error("Missing required reading '{0}'")]
-    MissingReading(ReadingName),
+    #[error("No main readings container found from {date}")]
+    NoContainerFound { date: DateId },
+    #[error("No day name element found from {date}")]
+    NoDayNameElementFound { date: DateId },
+    #[error("Missing required reading '{reading}' from {date}")]
+    MissingReading { reading: ReadingName, date: DateId },
 }
 
 #[cfg(test)]

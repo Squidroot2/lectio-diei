@@ -281,7 +281,7 @@ async fn ensure_list_stored(db: &DatabaseHandle, date_ids: Vec<DateId>, web_clie
     while let Some(thread_result) = tasks.join_next().await {
         match thread_result {
             Err(e) => error!("Failed to store a lectionary (Thread panicked!): {}", e),
-            Ok(Err(e)) => error!("Failed to store a lectionary: {}", e),
+            Ok(Err(e)) => error!("Failed to store a lectionary: ({})", e),
             Ok(Ok(new)) => {
                 if new {
                     count_added += 1;

@@ -14,7 +14,7 @@ use sqlx::{
 const DATE_ID_FORMAT: &str = "%m%d%y";
 
 /// Type-checked `String` used for url retrieval and database ids
-#[derive(Debug, PartialEq, Eq, FromRow)]
+#[derive(Debug, Clone, PartialEq, Eq, FromRow)]
 pub struct DateId {
     id: String,
 }

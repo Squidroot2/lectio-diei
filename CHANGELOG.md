@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## Unreleased
 - Added "list" alias for "db show" subcommand
 - More Logging
+    - Improved Error Messages
 - Updated dependencies
     - scraper to 0.22.0
 - Added thiserror as dependency to refactor Error types
