@@ -5,6 +5,8 @@ The format of this changelog is based on [Keep a Changelog](https://keepachangel
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## Unreleased
+
+## [0.3.3] - 2024-12-14
 - Added "list" alias for "db show" subcommand
 - More Logging
     - Improved Error Messages
@@ -13,6 +15,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Added thiserror as dependency to refactor Error types
 - "Responsorial" will now be read as Psalm
 - Added "db store" command
+
+[0.3.3]: https://github.com/Squidroot2/lectio-diei/compare/v0.3.2...v0.3.3
 
 ## [0.3.2] - 2024-12-09
 - Code lint
