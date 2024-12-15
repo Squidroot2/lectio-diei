@@ -82,7 +82,13 @@ pub enum DatabaseCommand {
     },
     /// Equivalent of db clean + db update
     Refresh,
-    //TODO store
+    /// Stores specified dates in to the database if they are not present
+    ///
+    /// Writes number of new entries to STDOUT
+    Store {
+        #[arg(trailing_var_arg(true), num_args(1..usize::MAX))]
+        dates: Vec<String>,
+    },
 }
 
 #[derive(Subcommand, Copy, Clone)]

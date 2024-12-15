@@ -113,7 +113,7 @@ impl TryFrom<String> for ReadingName {
         match trimmed {
             Self::READING1 | "Reading 1" => Ok(Self::Reading1),
             Self::READING2 | "Reading 2" => Ok(Self::Reading2),
-            Self::PSALM => Ok(Self::Psalm),
+            Self::PSALM | "Responsorial" => Ok(Self::Psalm),
             Self::GOSPEL => Ok(Self::Gospel),
             Self::ALLELUIA | "Alleluia See" => Ok(Self::Alleluia),
             _ => Err(Self::Error::from(value)),
