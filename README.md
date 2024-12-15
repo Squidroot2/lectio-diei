@@ -49,7 +49,7 @@ After running any valid command at least once, you should have a config file at 
   - [ ] Change
 - [ ] Windows support (maybe others?)
 - [ ] Store single day without displaying
-- [ ] No database mode
+- [x] No database mode
 - [ ] Database-only mode (Don't retrieve from web if you don't already have it)
 - [ ] Additional logging options
 - [ ] Formalized and documented error codes
