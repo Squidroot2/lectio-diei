@@ -1,4 +1,3 @@
-
 use chrono::{Local, ParseError, TimeDelta};
 use log::*;
 use tokio::task::JoinSet;
@@ -56,6 +55,7 @@ pub async fn handle_db_command(subcommand: DatabaseCommand) -> Result<(), Applic
         DatabaseCommand::Purge => purge_db().await.map_err(ApplicationError::from),
         DatabaseCommand::Clean { all } => clean_db(all).await.map_err(ApplicationError::from),
         DatabaseCommand::Refresh => refresh_db().await.map_err(ApplicationError::from),
+        DatabaseCommand::Store { dates } => add_entries(dates).await.map_err(ApplicationError::from),
     }
 }
 
@@ -70,7 +70,7 @@ pub fn handle_config_command(subcommand: ConfigCommand) -> Result<(), Applicatio
         ConfigCommand::Show => {
             show_config();
             Ok(())
-        },
+        }
     }
 }
 
@@ -89,18 +89,7 @@ async fn count_entries() -> Result<(), DatabaseError> {
 ///
 /// Removes a list of entries. Sends removed count to STDOUT
 async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitError> {
-    let date_ids: Vec<DateId> = date_strings
-        .iter()
-        .filter_map(|date_string| {
-            if let Ok(date_id) = DateId::checked_from_str(date_string) {
-                Some(date_id)
-            } else {
-                warn!("'{date_string}' is not a valid date id. Skipping...");
-                None
-            }
-        })
-        .collect();
-
+    let date_ids: Vec<DateId> = convert_valid_date_list(&date_strings);
     let db = DatabaseHandle::new().await?;
     let mut removed_count = 0;
     for id in date_ids {
@@ -117,6 +106,34 @@ async fn remove_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitErr
 
     println!("{removed_count}");
     Ok(())
+}
+
+/// Subcommand: db store
+///
+/// Stores a list of entries. Sends added count to STDOUT
+async fn add_entries(date_strings: Vec<String>) -> Result<(), DatabaseInitError> {
+    let date_ids = convert_valid_date_list(&date_strings);
+    let db = DatabaseHandle::new().await?;
+    let web_client = WebClient::default();
+    let added = ensure_list_stored(&db, date_ids, &web_client).await;
+
+    println!("{added}");
+    Ok(())
+}
+/// Converts a list of Strings to a list (typically arguments) to a list of `DateIds`
+/// Ignores invalid strings with a warning
+fn convert_valid_date_list(date_strings: &[String]) -> Vec<DateId> {
+    date_strings
+        .iter()
+        .filter_map(|date_string| {
+            if let Ok(date_id) = DateId::checked_from_str(date_string) {
+                Some(date_id)
+            } else {
+                warn!("'{date_string}' is not a valid date id. Skipping...");
+                None
+            }
+        })
+        .collect()
 }
 
 /// Subcommand: db purge
@@ -197,7 +214,7 @@ fn init_config(force: bool) -> Result<(), InitConfigError> {
         Ok(()) => {
             println!("success");
             Ok(())
-        },
+        }
         Err(e) => {
             if matches!(e, InitConfigError::AlreadyExists(_)) && !force {
                 warn!("Config file already exists. Must use '--force' to overwrite existing file");
@@ -248,7 +265,10 @@ async fn clean_db_inner(db: &DatabaseHandle, db_config: DbConfig, all: bool) -> 
 /// Used by db udpate and db refresh
 async fn update_db_inner(db: &DatabaseHandle, db_config: DbConfig, web_client: &WebClient) -> u64 {
     let date_ids = DateId::get_list(db_config.past_entries, db_config.future_entries);
+    ensure_list_stored(db, date_ids, web_client).await
+}
 
+async fn ensure_list_stored(db: &DatabaseHandle, date_ids: Vec<DateId>, web_client: &WebClient) -> u64 {
     let mut tasks = JoinSet::new();
     for id in date_ids {
         let thread_db = db.clone();
@@ -315,5 +335,3 @@ impl From<DatabaseInitError> for ApplicationError {
         Self::from(DatabaseError::InitError(value))
     }
 }
-
-
