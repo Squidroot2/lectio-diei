@@ -48,8 +48,8 @@ After running any valid command at least once, you should have a config file at 
   - [x] Show
   - [ ] Change
 - [ ] Windows support (maybe others?)
-- [ ] Store single day without displaying
-- [x] No database mode
+- [x] Store single day without displaying
+- [ ] No database mode
 - [ ] Database-only mode (Don't retrieve from web if you don't already have it)
 - [ ] Additional logging options
 - [ ] Formalized and documented error codes
