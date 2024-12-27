@@ -76,7 +76,7 @@ pub fn create_and_get_config_path() -> Result<PathBuf, PathError> {
 
 #[cfg(target_family = "windows")]
 fn get_local_app_data() -> Result<PathBuf, PathError> {
-    env::var(LOCALAPPDATA_ENV_VAR).map(PathBuf::from).map_err(|e| PathError::NoEnv {
+    env::var(LOCALAPPDATA_ENV_VAR).map(PathBuf::from).map_err(|e| PathError::NoEnvVar {
         var_name: LOCALAPPDATA_ENV_VAR,
         source: e,
     })
@@ -84,7 +84,7 @@ fn get_local_app_data() -> Result<PathBuf, PathError> {
 
 #[cfg(target_family = "windows")]
 fn get_app_data() -> Result<PathBuf, PathError> {
-    env::var(APPDATA_ENV_VAR).map(PathBuf::from).map_err(|e| PathError::NoEnv {
+    env::var(APPDATA_ENV_VAR).map(PathBuf::from).map_err(|e| PathError::NoEnvVar {
         var_name: APPDATA_ENV_VAR,
         source: e,
     })
