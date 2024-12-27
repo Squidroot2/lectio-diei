@@ -12,6 +12,7 @@ const CONFIG_FILE_NAME: &str = "config.toml";
 #[cfg(target_family = "unix")]
 const STATE_ENV_VAR: &str = "XDG_STATE_HOME";
 /// Used for data
+#[cfg(target_family = "unix")]
 const DATA_ENV_VAR: &str = "XDG_DATA_HOME";
 
 /// Used for data and logging
@@ -91,6 +92,7 @@ fn get_app_data() -> Result<PathBuf, PathError> {
 }
 
 /// First trie `$XDG_STATE_HOME`, then tries $HOME/.local/state
+#[cfg(target_family = "unix")]
 fn get_xdg_state_home() -> Result<PathBuf, PathError> {
     let xdg_path = match env::var(STATE_ENV_VAR) {
         Ok(path_str) => PathBuf::from(path_str),
@@ -110,6 +112,7 @@ fn get_xdg_state_home() -> Result<PathBuf, PathError> {
 }
 
 /// First tries `$XDG_DATA_HOME`, then tries $HOME/.local/share
+#[cfg(target_family = "unix")]
 fn get_xdg_data_home() -> Result<PathBuf, PathError> {
     let xdg_path = match env::var(DATA_ENV_VAR) {
         Ok(path_str) => PathBuf::from(path_str),
@@ -129,6 +132,7 @@ fn get_xdg_data_home() -> Result<PathBuf, PathError> {
 }
 
 /// First tries `$XDG_CONFIG_HOME`, then tries $HOME/.config/
+#[cfg(target_family = "unix")]
 fn get_xdg_config_home() -> Result<PathBuf, PathError> {
     let xdg_path = match env::var(CONFIG_ENV_VAR) {
         Ok(path_str) => PathBuf::from(path_str),
@@ -146,6 +150,7 @@ fn get_xdg_config_home() -> Result<PathBuf, PathError> {
     Ok(xdg_path)
 }
 
+#[cfg(target_family = "unix")]
 fn get_home_path() -> Result<PathBuf, PathError> {
     env::var(HOME_ENV_VAR).map(PathBuf::from).map_err(PathError::no_home_env)
 }
@@ -189,6 +194,7 @@ pub enum PathError {
     PathCreateFailure(#[from] io::Error),
 }
 
+#[cfg(target_family = "unix")]
 impl PathError {
     fn no_home_env(error: VarError) -> Self {
         Self::NoEnvVar {
