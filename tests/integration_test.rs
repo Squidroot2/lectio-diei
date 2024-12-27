@@ -2,6 +2,7 @@ use std::{env, fs, path::Path};
 
 use lectio_diei::{args::ConfigCommand, commands};
 
+#[cfg(target_family = "unix")]
 #[test]
 fn full_thread() {
     // Set ENV Variables
@@ -28,6 +29,30 @@ fn full_thread() {
     fs::remove_dir_all(temp_dir_root).unwrap();
 }
 
+#[cfg(target_family = "windows")]
+#[test]
+fn full_thread() {
+    // Set ENV Variables
+    let temp_dir_root = env::current_dir().unwrap().join("temp_test");
+    let app_dir = temp_dir_root.join("data");
+    let local_app_dir = temp_dir_root.join("localdata");
+    // SAFETY: integration test runs serially in single thread
+    #[allow(unused_unsafe)]
+    unsafe {
+        env::set_var("APPDATA", app_dir.as_os_str());
+        env::set_var("LOCALAPPDATA", local_app_dir.as_os_str());
+    }
+
+    // Create the directories so that when we remove them, we don't ignore the error
+    fs::create_dir_all(&local_app_dir).unwrap();
+    fs::remove_dir_all(&local_app_dir).unwrap();
+
+    //TODO more of full thread
+    test_config_init_no_force(&local_app_dir);
+
+    // Cleanup
+    fs::remove_dir_all(temp_dir_root).unwrap();
+}
 fn test_config_init_no_force(config_dir: &Path) {
     assert!(commands::handle_config_command(ConfigCommand::Init { force: false }).is_ok());
     let config = config_dir.join(env!("CARGO_PKG_NAME")).join("config.toml");
