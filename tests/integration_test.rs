@@ -44,11 +44,11 @@ fn full_thread() {
     }
 
     // Create the directories so that when we remove them, we don't ignore the error
-    fs::create_dir_all(&local_app_dir).unwrap();
-    fs::remove_dir_all(&local_app_dir).unwrap();
+    fs::create_dir_all(&app_dir).unwrap();
+    fs::remove_dir_all(&app_dir).unwrap();
 
     //TODO more of full thread
-    test_config_init_no_force(&local_app_dir);
+    test_config_init_no_force(&app_dir);
 
     // Cleanup
     fs::remove_dir_all(temp_dir_root).unwrap();
