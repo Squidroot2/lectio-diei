@@ -48,7 +48,7 @@ After running any valid command at least once, you should have a config file at 
 - [ ] Config options from commandline
   - [x] Show
   - [ ] Change
-- [ ] Windows support (maybe others?)
+- [x] Windows support
 - [x] Store single day without displaying
 - [ ] No database mode
 - [ ] Database-only mode (Don't retrieve from web if you don't already have it)
